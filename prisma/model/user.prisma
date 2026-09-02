@@ -1,11 +1,14 @@
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(CANDIDATE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String       @id @default(cuid())
+  name              String
+  email             String       @unique
+  password          String
+  profilePhoto      String?
+  phone             String?
+  role              Role         @default(CANDIDATE)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
  
   // recruiterProfile RecruiterProfile?
@@ -25,4 +28,5 @@ model User {
 
    
   // evaluations Evaluation[]
+@@map("users")
 }
