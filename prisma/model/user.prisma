@@ -1,0 +1,28 @@
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CANDIDATE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+ 
+  // recruiterProfile RecruiterProfile?
+  // candidateProfile CandidateProfile?
+
+ 
+  // assessments Assessment[] @relation("AssessmentCreator")
+
+   
+  // invitations Invitation[]
+
+ 
+  // attempts Attempt[]
+
+ 
+  // submissions Submission[]
+
+   
+  // evaluations Evaluation[]
+}
