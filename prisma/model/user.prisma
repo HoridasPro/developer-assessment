@@ -6,6 +6,7 @@ model User {
   profilePhoto      String?
   phone             String?
   role              Role         @default(CANDIDATE)
+  status            ActiveStatus @default(ACTIVE)
   isActive          Boolean      @default(true)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt

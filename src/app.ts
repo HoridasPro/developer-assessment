@@ -26,7 +26,7 @@ app.use(cookieParser());
 app.use("/api/v1/auth", AuhtRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
-  res.send("Developer assessment & coding platform");
+  res.send("Welcome developer assessment & coding platform");
 });
 
 app.use(globalErrorHandler);

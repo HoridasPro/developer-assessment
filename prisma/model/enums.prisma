@@ -3,3 +3,8 @@ enum Role {
   RECRUITER
   CANDIDATE
 }
+enum ActiveStatus {
+  ACTIVE
+  SUSPENDED
+  BLOCKED
+}
