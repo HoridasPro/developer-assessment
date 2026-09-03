@@ -40,26 +40,24 @@ const userLoginDB = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const refreshToken = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const { refreshToken } = req.body;
+const refreshTokenDB = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
 
-//     if (!refreshToken) {
-//       throw new Error("Refresh token is required");
-//     }
+  if (!refreshToken) {
+    throw new Error("Refresh token is required");
+  }
 
-//     const result = await AuthService.(refreshToken);
+  const result = await AuthService.refreshToken(refreshToken);
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Access token refreshed successfully",
-//       data: result,
-//     });
-//   },
-// );
- 
+  sendResponse(res, {
+    success: true,
+    message: "Access token refreshed successfully",
+    data: result,
+  });
+});
 
 export const AuthController = {
   registerUserControllerDB,
   userLoginDB,
+  refreshTokenDB,
 };

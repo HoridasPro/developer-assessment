@@ -9,6 +9,7 @@ import config from "./app/config";
 
 import { AuhtRoutes } from "./app/module/auth/auth.route";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandle";
+import { UserRoutes } from "./app/module/user/user.route";
 
 const app: Application = express();
 
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/api/v1/auth", AuhtRoutes);
+app.use("/api/v1/users", UserRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("Welcome developer assessment & coding platform");

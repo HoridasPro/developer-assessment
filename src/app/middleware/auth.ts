@@ -21,11 +21,18 @@ declare global {
 export const auth = (...requiredRoles: Role[]) => {
   return catchAsync(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const token = req.cookies.accessToken
-        ? req.cookies.accessToken
-        : req.headers.authorization?.startsWith("Bearer ")
-          ? req.headers.authorization.split(" ")[1]
-          : req.headers.authorization;
+      // const token = req.cookies.accessToken
+      //   ? req.cookies.accessToken
+      //   : req.headers.authorization?.startsWith("Bearer ")
+      //     ? req.headers.authorization.split(" ")[1]
+      //     : req.headers.authorization;
+
+      const authHeader = req.headers.authorization;
+
+      const token = authHeader?.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : req.cookies.accessToken;
+      console.log("get token", token);
 
       if (!token) {
         throw new Error("User not logged in. Please login first.");

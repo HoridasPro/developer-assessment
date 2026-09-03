@@ -1,11 +1,11 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
-import { IUserLoginPayload, IUserRegisterPayload } from "./auth.interface";
 import { jwtUtils } from "../../utils/jwt";
 import config from "../../config";
-import { SignOptions } from "jsonwebtoken";
 import { Role } from "../../../../generated/prisma/enums";
+import { IUserLoginPayload, IUserRegisterPayload } from "./auth.interface";
+import { SignOptions } from "jsonwebtoken";
 
 // User Register
 const registerUser = async (payload: IUserRegisterPayload) => {
@@ -69,27 +69,25 @@ const userLogin = async (payload: IUserLoginPayload) => {
   if (!jwt_access_secret) {
     throw new Error("JWT_ACCESS_SECRET is not defined");
   }
+
   if (!jwt_refresh_secret) {
-    throw new Error("JWT_REFRESH_SECRET is not defined");
+    throw new Error("JWT_refresh_SECRET is not defined");
   }
+
   const jwtPayload = {
     id: user.id,
     email: user.email,
     role: user.role,
   };
   // accesstoken
-  const accessToken = jwtUtils.createToken(
-    jwtPayload,
-    jwt_access_secret,
-    config.jwt_access_expires_in as SignOptions,
-  );
+  const accessToken = jwtUtils.createToken(jwtPayload, jwt_access_secret, {
+    expiresIn: config.jwt_access_expires_in as SignOptions["expiresIn"],
+  });
 
   // refresh token
-  const refreshToken = jwtUtils.createToken(
-    jwtPayload,
-    jwt_refresh_secret,
-    config.jwt_refresh_expires_in as SignOptions,
-  );
+  const refreshToken = jwtUtils.createToken(jwtPayload, jwt_refresh_secret, {
+    expiresIn: config.jwt_refresh_expires_in as SignOptions["expiresIn"],
+  });
 
   return {
     accessToken,
@@ -97,61 +95,59 @@ const userLogin = async (payload: IUserLoginPayload) => {
   };
 };
 
-// const refreshToken = async (token: string) => {
-//   // 1. Refresh token verify
-//   if (!config.jwt_refresh_secret) {
-//     throw new Error("JWT refrehs secret is not defined");
-//   }
-//   const verifiedToken = jwtUtils.verifyToken(token, config.jwt_refresh_secret);
+const refreshToken = async (token: string) => {
+  if (!config.jwt_refresh_secret) {
+    throw new Error("JWT refrehs secret is not defined");
+  }
+  const verifiedToken = jwtUtils.verifyToken(token, config.jwt_refresh_secret);
 
-//   if (!verifiedToken.success) {
-//     throw new Error("Invalid or expired refresh token");
-//   }
+  if (!verifiedToken.success) {
+    throw new Error("Invalid or expired refresh token");
+  }
 
-//   // 2. Token payload
-//   const payload = verifiedToken.data as {
-//     id: string;
-//     email: string;
-//     role: Role;
-//   };
+  // 2. Token payload
+  const payload = verifiedToken.data as {
+    id: string;
+    email: string;
+    role: Role;
+  };
 
-//   // 3. User check
-//   const user = await prisma.user.findUnique({
-//     where: {
-//       id: payload.id,
-//     },
-//   });
+  // 3. User check
+  const user = await prisma.user.findUnique({
+    where: {
+      id: payload.id,
+    },
+  });
 
-//   if (!user) {
-//     throw new Error("User not found");
-//   }
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-//   // 4. User active check
-//   if (!user.isActive) {
-//     throw new Error("User account is inactive");
-//   }
-//   if (!config.jwt_access_secret) {
-//     throw new Error("JWT refrehs secret is not defined");
-//   }
-
-//   // 5. New access token
-//   const accessToken = jwtUtils.createToken(
-//     {
-//       id: user.id,
-//       email: user.email,
-//       role: user.role,
-//     },
-//     config.jwt_access_secret,
-//     config.jwt_access_expires_in as SignOptions,
-//   );
-
-//   return {
-//     accessToken,
-//   };
-// };
+  // 4. User active check
+  if (!user.isActive) {
+    throw new Error("User account is inactive");
+  }
+  if (!config.jwt_access_secret) {
+    throw new Error("JWT access secret is not defined");
+  }
+  const accessToken = jwtUtils.createToken(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    config.jwt_access_secret,
+    {
+      expiresIn: config.jwt_access_expires_in as SignOptions["expiresIn"],
+    },
+  );
+  return {
+    accessToken,
+  };
+};
 
 export const AuthService = {
   registerUser,
   userLogin,
-  // refreshToken,
+  refreshToken,
 };
