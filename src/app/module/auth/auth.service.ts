@@ -9,7 +9,7 @@ import { SignOptions } from "jsonwebtoken";
 
 // User Register
 const registerUser = async (payload: IUserRegisterPayload) => {
-  const { name, password, profilePhoto, role, isActive, phone } = payload;
+  const { name, password, profilePhoto, role, isActive } = payload;
   const email = payload.email.trim().toLowerCase();
 
   const isUserExists = await prisma.user.findUnique({
@@ -35,7 +35,6 @@ const registerUser = async (payload: IUserRegisterPayload) => {
       email,
       password: hashedPassword,
       profilePhoto,
-      phone,
       role,
       isActive,
     },
@@ -47,7 +46,6 @@ const registerUser = async (payload: IUserRegisterPayload) => {
     profilePhoto: newUser.profilePhoto,
     role: newUser.role,
     isActive: newUser.isActive,
-    phone: newUser.phone,
   };
 
   return result;

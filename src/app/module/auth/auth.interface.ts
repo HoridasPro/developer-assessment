@@ -8,7 +8,6 @@ export interface IUserRegisterPayload {
   profilePhoto: string;
   role: Role;
   isActive: boolean;
-  phone: string;
 }
 
 // User login

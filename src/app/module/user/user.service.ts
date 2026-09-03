@@ -25,51 +25,51 @@ const getMyProfile = async (userId: string) => {
   return user;
 };
 
-// const updateMyProfile = async (
-//   userId: string,
-//   payload: {
-//     name?: string;
-//     email?: string;
-//   },
-// ) => {
-//   const user = await prisma.user.findUnique({
-//     where: {
-//       id: userId,
-//     },
-//   });
+const updateMyProfile = async (
+  userId: string,
+  payload: {
+    name?: string;
+    email?: string;
+  },
+) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
 
-//   if (!user) {
-//     throw new Error("User not found");
-//   }
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-//   const updatedUser = await prisma.user.update({
-//     where: {
-//       id: userId,
-//     },
-//     data: {
-//       ...(payload.name && {
-//         name: payload.name,
-//       }),
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      ...(payload.name && {
+        name: payload.name,
+      }),
 
-//       ...(payload.email && {
-//         email: payload.email,
-//       }),
-//     },
-//     select: {
-//       id: true,
-//       name: true,
-//       email: true,
-//       role: true,
-//       isActive: true,
-//       createdAt: true,
-//       updatedAt: true,
-//     },
-//   });
+      ...(payload.email && {
+        email: payload.email,
+      }),
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 
-//   return updatedUser;
-// };
+  return updatedUser;
+};
 
 export const UserService = {
   getMyProfile,
-  // updateMyProfile,
+  updateMyProfile,
 };

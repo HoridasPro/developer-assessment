@@ -1,33 +1,21 @@
 model User {
-  id                String       @id @default(cuid())
+  id                String                @id @default(cuid()) 
   name              String
-  email             String       @unique
+  email             String                @unique
   password          String
   profilePhoto      String?
-  phone             String?
-  role              Role         @default(CANDIDATE)
-  status            ActiveStatus @default(ACTIVE)
-  isActive          Boolean      @default(true)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  role              Role                  @default(CANDIDATE)
+  cadidateProfile   CandidateProfile?
+  status            ActiveStatus          @default(ACTIVE)
+  isActive          Boolean               @default(true)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
- 
   // recruiterProfile RecruiterProfile?
-  // candidateProfile CandidateProfile?
-
- 
   // assessments Assessment[] @relation("AssessmentCreator")
-
-   
   // invitations Invitation[]
-
- 
   // attempts Attempt[]
-
- 
   // submissions Submission[]
-
-   
   // evaluations Evaluation[]
-@@map("users")
+  @@map("users")
 }
