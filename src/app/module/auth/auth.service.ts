@@ -3,13 +3,13 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import config from "../../config";
-import { Role } from "../../../../generated/prisma/enums";
+import { AccountStatus, Role } from "../../../../generated/prisma/enums";
 import { IUserLoginPayload, IUserRegisterPayload } from "./auth.interface";
 import { SignOptions } from "jsonwebtoken";
 
 // User Register
 const registerUser = async (payload: IUserRegisterPayload) => {
-  const { name, password, profilePhoto, role, isActive } = payload;
+  const { name, password, profilePhoto, role, status, isActive } = payload;
   const email = payload.email.trim().toLowerCase();
 
   const isUserExists = await prisma.user.findUnique({
@@ -19,7 +19,7 @@ const registerUser = async (payload: IUserRegisterPayload) => {
     },
   });
 
-  if (role !== Role.CANDIDATE) {
+  if (role !== Role.CANDIDATE && role !== Role.RECRUITER) {
     throw new Error("Only candidate can register");
   }
 
@@ -28,6 +28,10 @@ const registerUser = async (payload: IUserRegisterPayload) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  const accountStatus =
+    payload.role === Role.RECRUITER
+      ? AccountStatus.PENDING
+      : AccountStatus.APPROVED;
 
   const newUser = await prisma.user.create({
     data: {
@@ -36,7 +40,9 @@ const registerUser = async (payload: IUserRegisterPayload) => {
       password: hashedPassword,
       profilePhoto,
       role,
+      status,
       isActive,
+      accountStatus,
     },
   });
   const result = {
@@ -45,6 +51,7 @@ const registerUser = async (payload: IUserRegisterPayload) => {
     email: newUser.email,
     profilePhoto: newUser.profilePhoto,
     role: newUser.role,
+    status: newUser.status,
     isActive: newUser.isActive,
   };
 
@@ -61,6 +68,13 @@ const userLogin = async (payload: IUserLoginPayload) => {
   if (!isPasswordMatched) {
     throw new Error("Password is not matched");
   }
+
+  if (
+    user.role === Role.RECRUITER &&
+    user.accountStatus !== AccountStatus.APPROVED
+  ) {
+    throw new Error("Your recruiter account is not approved by admin yet");
+  }
   const jwt_access_secret = config.jwt_access_secret;
   const jwt_refresh_secret = config.jwt_refresh_secret;
 
@@ -76,6 +90,7 @@ const userLogin = async (payload: IUserLoginPayload) => {
     id: user.id,
     email: user.email,
     role: user.role,
+    AccountStatus: user.accountStatus,
   };
   // accesstoken
   const accessToken = jwtUtils.createToken(jwtPayload, jwt_access_secret, {

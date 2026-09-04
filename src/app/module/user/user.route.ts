@@ -8,10 +8,6 @@ const router = Router();
 
 router.get("/me", auth(Role.CANDIDATE), UserController.getMyProfileDB);
 
-// router.patch(
-//   "/me",
-//   auth(),
-//   UserController.updateMyProfile,
-// );
+router.patch("/me", auth(Role.CANDIDATE), UserController.updateMyProfileDB);
 
 export const UserRoutes = router;

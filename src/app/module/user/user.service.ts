@@ -1,37 +1,26 @@
 import { prisma } from "../../lib/prisma";
+import { ICandidateProfile } from "./user.interface";
 
 const getMyProfile = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      profilePhoto: true,
-      phone: true,
-      role: true,
-      status: true,
-      isActive: true,
+    // include: {
+    //   candidateProfile: true,
+    // },
+    omit: {
+      password: true,
     },
   });
+
   if (!user) {
-    throw new Error("User not found in the database");
+    throw new Error("User not found");
   }
-  if (!user.isActive) {
-    throw new Error("User is inactive");
-  }
+
   return user;
 };
-
-const updateMyProfile = async (
-  userId: string,
-  payload: {
-    name?: string;
-    email?: string;
-  },
-) => {
+const updateMyProfile = async (userId: string, payload: ICandidateProfile) => {
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -46,23 +35,77 @@ const updateMyProfile = async (
     where: {
       id: userId,
     },
+
     data: {
-      ...(payload.name && {
+      ...(payload.name !== undefined && {
         name: payload.name,
       }),
 
-      ...(payload.email && {
-        email: payload.email,
+      // CandidateProfile table
+      ...(payload.candidateProfile && {
+        candidateProfile: {
+          upsert: {
+            create: {
+              bio: payload.candidateProfile.bio,
+              phone: payload.candidateProfile.phone,
+              location: payload.candidateProfile.location,
+              skills: payload.candidateProfile.skills ?? [],
+              experience: payload.candidateProfile.experience,
+              education: payload.candidateProfile.education,
+              resumeUrl: payload.candidateProfile.resumeUrl,
+              portfolioUrl: payload.candidateProfile.portfolioUrl,
+              githubUrl: payload.candidateProfile.githubUrl,
+              linkedinUrl: payload.candidateProfile.linkedinUrl,
+            },
+
+            update: {
+              ...(payload.candidateProfile.bio !== undefined && {
+                bio: payload.candidateProfile.bio,
+              }),
+
+              ...(payload.candidateProfile.phone !== undefined && {
+                phone: payload.candidateProfile.phone,
+              }),
+
+              ...(payload.candidateProfile.location !== undefined && {
+                location: payload.candidateProfile.location,
+              }),
+
+              ...(payload.candidateProfile.skills !== undefined && {
+                skills: payload.candidateProfile.skills,
+              }),
+
+              ...(payload.candidateProfile.experience !== undefined && {
+                experience: payload.candidateProfile.experience,
+              }),
+
+              ...(payload.candidateProfile.education !== undefined && {
+                education: payload.candidateProfile.education,
+              }),
+
+              ...(payload.candidateProfile.resumeUrl !== undefined && {
+                resumeUrl: payload.candidateProfile.resumeUrl,
+              }),
+
+              ...(payload.candidateProfile.portfolioUrl !== undefined && {
+                portfolioUrl: payload.candidateProfile.portfolioUrl,
+              }),
+
+              ...(payload.candidateProfile.githubUrl !== undefined && {
+                githubUrl: payload.candidateProfile.githubUrl,
+              }),
+
+              ...(payload.candidateProfile.linkedinUrl !== undefined && {
+                linkedinUrl: payload.candidateProfile.linkedinUrl,
+              }),
+            },
+          },
+        },
       }),
     },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
+
+    include: {
+      candidateProfile: true,
     },
   });
 

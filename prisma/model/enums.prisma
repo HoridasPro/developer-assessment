@@ -8,3 +8,9 @@ enum ActiveStatus {
   SUSPENDED
   BLOCKED
 }
+enum AccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}

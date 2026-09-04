@@ -1,4 +1,4 @@
-import { Role } from "../../../../generated/prisma/enums";
+import { ActiveStatus, Role } from "../../../../generated/prisma/enums";
 
 // User register
 export interface IUserRegisterPayload {
@@ -7,6 +7,7 @@ export interface IUserRegisterPayload {
   password: string;
   profilePhoto: string;
   role: Role;
+  status: ActiveStatus;
   isActive: boolean;
 }
 

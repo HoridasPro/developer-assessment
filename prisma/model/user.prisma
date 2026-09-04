@@ -5,7 +5,8 @@ model User {
   password          String
   profilePhoto      String?
   role              Role                  @default(CANDIDATE)
-  cadidateProfile   CandidateProfile?
+  accountStatus    AccountStatus         @default(APPROVED)
+  candidateProfile  CandidateProfile?
   status            ActiveStatus          @default(ACTIVE)
   isActive          Boolean               @default(true)
   createdAt         DateTime              @default(now())
