@@ -1,6 +1,6 @@
 enum Role {
   ADMIN
-  RECRUITER
+  COMPANY
   CANDIDATE
 }
 enum ActiveStatus {
@@ -13,4 +13,23 @@ enum AccountStatus {
   APPROVED
   REJECTED
   SUSPENDED
+}
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum QuestionType {
+  MCQ
+  CODING
+  WRITTEN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
 }

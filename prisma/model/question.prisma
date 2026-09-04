@@ -1,0 +1,20 @@
+
+
+model Question {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  type        QuestionType
+  category    String
+  difficulty  Difficulty
+  marks       Float
+
+  options     QuestionOption[]
+
+  assessments AssessmentQuestion[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("questions")
+}

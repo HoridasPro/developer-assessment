@@ -5,18 +5,15 @@ model User {
   password          String
   profilePhoto      String?
   role              Role                  @default(CANDIDATE)
-  accountStatus    AccountStatus         @default(APPROVED)
-  candidateProfile  CandidateProfile?
+   
+  candidateProfile CandidateProfile?
+  companyProfile   CompanyProfile?
   status            ActiveStatus          @default(ACTIVE)
   isActive          Boolean               @default(true)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
 
-  // recruiterProfile RecruiterProfile?
-  // assessments Assessment[] @relation("AssessmentCreator")
-  // invitations Invitation[]
-  // attempts Attempt[]
-  // submissions Submission[]
-  // evaluations Evaluation[]
+   
   @@map("users")
 }
+ 

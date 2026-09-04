@@ -1,0 +1,10 @@
+model QuestionOption {
+  id         String   @id @default(uuid())
+  text       String
+  isCorrect  Boolean  @default(false)
+
+  questionId String
+  question   Question @relation(fields: [questionId],references: [id],onDelete: Cascade)
+
+  @@map("question_options")
+}
