@@ -98,83 +98,83 @@ const deleteQuestion = async (questionId: string) => {
   return null;
 };
 
-// const updateQuestion = async (
-//   userId: string,
-//   questionId: string,
-//   payload: Partial<ICreateQuestionPayload>,
-// ) => {
-//   const company = await prisma.companyProfile.findUnique({
-//     where: {
-//       userId,
-//     },
-//   });
+const updateQuestion = async (
+  userId: string,
+  questionId: string,
+  payload: Partial<ICreateQuestionPayload>,
+) => {
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
 
-//   if (!company) {
-//     throw new Error("Company profile not found");
-//   }
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
 
-//   const question = await prisma.question.findUnique({
-//     where: {
-//       id: questionId,
-//     },
-//   });
+  const question = await prisma.question.findUnique({
+    where: {
+      id: questionId,
+    },
+  });
 
-//   if (!question) {
-//     throw new Error("Question not found");
-//   }
+  if (!question) {
+    throw new Error("Question not found");
+  }
 
-//   // Question update
-//   await prisma.question.update({
-//     where: {
-//       id: questionId,
-//     },
-//     data: {
-//       title: payload.title,
-//       description: payload.description,
-//       type: payload.type,
-//       category: payload.category,
-//       difficulty: payload.difficulty,
-//       marks: payload.marks,
-//       option: payload.option,
-//     },
-//   });
+  // Question update
+  await prisma.question.update({
+    where: {
+      id: questionId,
+    },
+    data: {
+      title: payload.title,
+      description: payload.description,
+      type: payload.type,
+      category: payload.category,
+      difficulty: payload.difficulty,
+      marks: payload.marks,
+      option: payload.option,
+    },
+  });
 
-//   // Options পাঠানো হলে update হবে
-//   if (payload.options) {
-//     await prisma.questionOption.deleteMany({
-//       where: {
-//         questionId,
-//       },
-//     });
+  // Options পাঠানো হলে update হবে
+  if (payload.options) {
+    await prisma.questionOption.deleteMany({
+      where: {
+        questionId,
+      },
+    });
 
-//     if (payload.options.length > 0) {
-//       await prisma.questionOption.createMany({
-//         data: payload.options.map((option) => ({
-//           text: option.text,
-//           isCorrect: option.isCorrect,
-//           questionId,
-//         })),
-//       });
-//     }
-//   }
+    if (payload.options.length > 0) {
+      await prisma.questionOption.createMany({
+        data: payload.options.map((option) => ({
+          text: option.text,
+          isCorrect: option.isCorrect,
+          questionId,
+        })),
+      });
+    }
+  }
 
-//   // Updated Question + Options
-//   const result = await prisma.question.findUnique({
-//     where: {
-//       id: questionId,
-//     },
-//     include: {
-//       options: true,
-//     },
-//   });
+  // Updated Question + Options
+  const result = await prisma.question.findUnique({
+    where: {
+      id: questionId,
+    },
+    include: {
+      options: true,
+    },
+  });
 
-//   return result;
-// };
+  return result;
+};
 
 export const QuestionService = {
   createQuestions,
   getAllQuestions,
   getQuestionById,
   deleteQuestion,
-  // updateQuestion,
+  updateQuestion,
 };

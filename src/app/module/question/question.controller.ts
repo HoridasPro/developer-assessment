@@ -55,37 +55,37 @@ const deleteQuestion = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const updateQuestion = catchAsync(async (req: Request, res: Response) => {
-//   const userId = req.data?.id;
+const updateQuestion = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.data?.id;
 
-//   if (!userId) {
-//     throw new Error("User not authenticated");
-//   }
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
 
-//   const { questionId } = req.params;
-//   console.log("questionId get:", questionId);
+  const { questionId } = req.params;
+  console.log("questionId get:", questionId);
 
-//   if (Array.isArray(questionId)) {
-//     throw new Error("Invalid question ID");
-//   }
+  if (Array.isArray(questionId)) {
+    throw new Error("Invalid question ID");
+  }
 
-//   const result = await QuestionService.updateQuestion(
-//     userId,
-//     questionId,
-//     req.body,
-//   );
+  const result = await QuestionService.updateQuestion(
+    userId,
+    questionId,
+    req.body,
+  );
 
-//   sendResponse(res, {
-//     success: true,
-//     message: "Question updated successfully",
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    success: true,
+    message: "Question updated successfully",
+    data: result,
+  });
+});
 
 export const QuestionController = {
   createQuestions,
   getAllQuestions,
   getQuestionById,
   deleteQuestion,
-  // updateQuestion,
+  updateQuestion,
 };
