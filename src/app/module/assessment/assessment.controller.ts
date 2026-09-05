@@ -1,24 +1,24 @@
-// import type { Request, Response } from "express";
+import type { Request, Response } from "express";
 
-// import { catchAsync } from "../../utils/catchAsync";
-// import { sendResponse } from "../../utils/sendResponse";
+import { catchAsync } from "../../utils/catchAsync";
+import { sendResponse } from "../../utils/sendResponse";
 
-// import { AssessmentService } from "./assessment.service";
+import { AssessmentService } from "./assessment.service";
 
-// const createAssessmentDB = catchAsync(async (req: Request, res: Response) => {
-//   const userId = req.data?.id;
+const createAssessmentDB = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.data?.id;
 
-//   const result = await AssessmentService.createAssessment(
-//     userId as string,
-//     req.body,
-//   );
+  const result = await AssessmentService.createAssessment(
+    userId as string,
+    req.body,
+  );
 
-//   sendResponse(res, {
-//     success: true,
-//     message: "Assessment created successfully",
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    success: true,
+    message: "Assessment created successfully",
+    data: result,
+  });
+});
 
 // const addQuestionToAssessmentDB = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -51,7 +51,7 @@
 //   },
 // );
 
-// export const AssessmentController = {
-//   createAssessmentDB,
-//   addQuestionToAssessmentDB,
-// };
+export const AssessmentController = {
+  createAssessmentDB,
+  // addQuestionToAssessmentDB,
+};
