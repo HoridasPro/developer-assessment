@@ -3,8 +3,10 @@ model QuestionOption {
   text       String
   isCorrect  Boolean  @default(false)
 
+  assessments AssessmentQuestion[]
+
   questionId String
   question   Question @relation(fields: [questionId],references: [id],onDelete: Cascade)
 
-  @@map("question_options")
+  @@map("questionOptions")
 }

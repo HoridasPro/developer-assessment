@@ -8,6 +8,7 @@ model Question {
   category    String
   difficulty  Difficulty
   marks       Float
+  option      String?
 
   options     QuestionOption[]
 
