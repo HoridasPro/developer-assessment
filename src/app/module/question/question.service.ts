@@ -61,22 +61,22 @@ const getAllQuestions = async () => {
   return questions;
 };
 
-// const getQuestionById = async (questionId: string) => {
-//   const question = await prisma.question.findUnique({
-//     where: {
-//       id: questionId,
-//     },
-//     include: {
-//       options: true,
-//     },
-//   });
+const getQuestionById = async (questionId: string) => {
+  const question = await prisma.question.findUnique({
+    where: {
+      id: questionId,
+    },
+    include: {
+      options: true,
+    },
+  });
 
-//   if (!question) {
-//     throw new Error("Question not found");
-//   }
+  if (!question) {
+    throw new Error("Question not found");
+  }
 
-//   return question;
-// };
+  return question;
+};
 
 // const deleteQuestion = async (questionId: string) => {
 //   const question = await prisma.question.findUnique({
@@ -174,7 +174,7 @@ const getAllQuestions = async () => {
 export const QuestionService = {
   createQuestions,
   getAllQuestions,
-  // getQuestionById,
+  getQuestionById,
   // deleteQuestion,
   // updateQuestion,
 };

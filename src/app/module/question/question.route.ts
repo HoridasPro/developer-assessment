@@ -9,7 +9,7 @@ router.post("/", auth(Role.COMPANY), QuestionController.createQuestions);
 
 router.get("/", auth(Role.COMPANY), QuestionController.getAllQuestions);
 
-// router.get("/:id", auth(Role.COMPANY), QuestionController.getQuestionById);
+router.get("/:id", auth(Role.COMPANY), QuestionController.getQuestionById);
 
 // router.delete("/:id", auth(Role.COMPANY), QuestionController.deleteQuestion);
 // router.patch("/:questionId", auth(Role.COMPANY), QuestionController.updateQuestion);

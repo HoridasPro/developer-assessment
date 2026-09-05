@@ -31,17 +31,17 @@ const getAllQuestions = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const getQuestionById = catchAsync(async (req: Request, res: Response) => {
-//   const { id } = req.params;
+const getQuestionById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-//   const result = await QuestionService.getQuestionById(id as string);
+  const result = await QuestionService.getQuestionById(id as string);
 
-//   sendResponse(res, {
-//     success: true,
-//     message: "Question fetched successfully",
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    success: true,
+    message: "Question fetched successfully",
+    data: result,
+  });
+});
 
 // const deleteQuestion = catchAsync(async (req: Request, res: Response) => {
 //   const { id } = req.params;
@@ -85,7 +85,7 @@ const getAllQuestions = catchAsync(async (req: Request, res: Response) => {
 export const QuestionController = {
   createQuestions,
   getAllQuestions,
-  // getQuestionById,
+  getQuestionById,
   // deleteQuestion,
   // updateQuestion,
 };
