@@ -10,10 +10,10 @@ router.post(
   auth(Role.COMPANY),
   AssessmentController.createAssessmentDB,
 );
-// router.post(
-//   "/questions/:assessmentId",
-//   auth(Role.COMPANY),
-//   AssessmentController.addQuestionToAssessmentDB,
-// );
+router.post(
+  "/questions/:assessmentId",
+  auth(Role.COMPANY),
+  AssessmentController.addQuestionToAssessmentDB,
+);
 
 export const AssessmentRoutes = router;

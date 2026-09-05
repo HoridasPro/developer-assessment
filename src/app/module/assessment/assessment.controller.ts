@@ -20,38 +20,38 @@ const createAssessmentDB = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const addQuestionToAssessmentDB = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.data?.id;
+const addQuestionToAssessmentDB = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.data?.id;
 
-//     if (!userId) {
-//       throw new Error("User not authenticated");
-//     }
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
 
-//     const { assessmentId } = req.params;
-//     if (Array.isArray(assessmentId)) {
-//       throw new Error("Invalid assessment ID");
-//     }
+    const { assessmentId } = req.params;
+    if (Array.isArray(assessmentId)) {
+      throw new Error("Invalid assessment ID");
+    }
 
-//     const { questionId, order, marks } = req.body;
+    const { questionId, order, marks } = req.body;
 
-//     const result = await AssessmentService.addQuestionToAssessment(
-//       userId,
-//       assessmentId,
-//       questionId,
-//       order,
-//       marks,
-//     );
+    const result = await AssessmentService.addQuestionToAssessment(
+      userId,
+      assessmentId,
+      questionId,
+      order,
+      marks,
+    );
 
-//     res.status(201).json({
-//       success: true,
-//       message: "Question added to assessment successfully",
-//       data: result,
-//     });
-//   },
-// );
+    res.status(201).json({
+      success: true,
+      message: "Question added to assessment successfully",
+      data: result,
+    });
+  },
+);
 
 export const AssessmentController = {
   createAssessmentDB,
-  // addQuestionToAssessmentDB,
+  addQuestionToAssessmentDB,
 };
