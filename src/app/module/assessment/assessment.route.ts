@@ -16,4 +16,10 @@ router.post(
   AssessmentController.addQuestionToAssessmentDB,
 );
 
+router.patch(
+  "/publish/:assessmentId",
+  auth(Role.COMPANY),
+  AssessmentController.publishAssessment,
+);
+
 export const AssessmentRoutes = router;

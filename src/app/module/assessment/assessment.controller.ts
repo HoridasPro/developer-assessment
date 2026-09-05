@@ -51,7 +51,24 @@ const addQuestionToAssessmentDB = catchAsync(
   },
 );
 
+const publishAssessment = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.data?.id as string;
+  const { assessmentId } = req.params;
+
+  const result = await AssessmentService.publishAssessment(
+    userId,
+    assessmentId as string,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Assessment published successfully",
+    data: result,
+  });
+});
+
 export const AssessmentController = {
   createAssessmentDB,
   addQuestionToAssessmentDB,
+  publishAssessment,
 };

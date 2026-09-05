@@ -97,127 +97,107 @@ const addQuestionToAssessment = async (
   }
 
   const alreadyExists = await prisma.assessmentQuestion.findUnique({
-  where: {
-    assessmentId_questionId: {
-      assessmentId,
-      questionId,
-    },
-  },
-});
-
-if (alreadyExists) {
-  throw new Error("Question already added to this assessment");
-}
-
-  // Assessment-এর সাথে Question attach
-  const assessmentQuestion =
-    await prisma.assessmentQuestion.create({
-      data: {
+    where: {
+      assessmentId_questionId: {
         assessmentId,
         questionId,
-        order,
-        marks: marks ?? question.marks,
       },
-      include: {
-        questions: {
-          include: {
-            options: true,
-          },
+    },
+  });
+
+  if (alreadyExists) {
+    throw new Error("Question already added to this assessment");
+  }
+
+  // Assessment-এর সাথে Question attach
+  const assessmentQuestion = await prisma.assessmentQuestion.create({
+    data: {
+      assessmentId,
+      questionId,
+      order,
+      marks: marks ?? question.marks,
+    },
+    include: {
+      questions: {
+        include: {
+          options: true,
         },
       },
-    });
+    },
+  });
 
   return assessmentQuestion;
 };
 
-// const publishAssessment = async (
-//   userId: string,
-//   assessmentId: string,
-// ) => {
-//   // Company খুঁজে বের করা
-//   const company = await prisma.companyProfile.findUnique({
-//     where: {
-//       userId,
-//     },
-//   });
+const publishAssessment = async (userId: string, assessmentId: string) => {
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
+  console.log("========== PUBLISH DEBUG ==========");
+  console.log("userId get=", userId);
+  console.log("assessmentId get=", assessmentId);
 
-//   if (!company) {
-//     throw new Error("Company profile not found");
-//   }
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
 
-//   // Assessment ওই company-এর কিনা check
-//   const assessment = await prisma.assessment.findFirst({
-//     where: {
-//       id: assessmentId,
-//       companyId: company.id,
-//     },
-//   });
+  const assessment = await prisma.assessment.findFirst({
+    where: {
+      id: assessmentId,
+      companyId: company.id,
+    },
+  });
 
-//   if (!assessment) {
-//     throw new Error("Assessment not found");
-//   }
+  if (!assessment) {
+    throw new Error("Assessment not found");
+  }
 
-//   // Already published কিনা
-//   if (assessment.status === "PUBLISHED") {
-//     throw new Error("Assessment is already published");
-//   }
+  if (assessment.status === "PUBLISHED") {
+    throw new Error("Assessment is already published");
+  }
 
-//   // অন্তত একটি question আছে কিনা
-//   const questionCount = await prisma.assessmentQuestion.count({
-//     where: {
-//       assessmentId,
-//     },
-//   });
+  const questionCount = await prisma.assessmentQuestion.count({
+    where: {
+      assessmentId: assessmentId,
+    },
+  });
 
-//   if (questionCount === 0) {
-//     throw new Error(
-//       "Cannot publish assessment without questions",
-//     );
-//   }
+  if (questionCount === 0) {
+    throw new Error("Cannot publish assessment without questions");
+  }
 
-//   // Publish assessment
-//   const publishedAssessment =
-//     await prisma.assessment.update({
-//       where: {
-//         id: assessmentId,
-//       },
-//       data: {
-//         status: "PUBLISHED",
-//       },
-//       include: {
-//         company: {
-//           include: {
-//             user: {
-//               select: {
-//                 id: true,
-//                 name: true,
-//                 email: true,
-//                 profilePhoto: true,
-//                 role: true,
-//               },
-//             },
-//           },
-//         },
-//         assessmentQuestions: {
-//           include: {
-//             questions: {
-//               include: {
-//                 options: true,
-//               },
-//             },
-//           },
-//           orderBy: {
-//             order: "asc",
-//           },
-//         },
-//       },
-//     });
+  const publishedAssessment = await prisma.assessment.update({
+    where: {
+      id: assessmentId,
+    },
+    data: {
+      status: "PUBLISHED",
+    },
+    include: {
+      company: true,
 
-//   return publishedAssessment;
-// };
+      questions: {
+        include: {
+          questions: {
+            include: {
+              options: true,
+            },
+          },
+        },
+        orderBy: {
+          order: "asc",
+        },
+      },
+    },
+  });
+
+  return publishedAssessment;
+};
 
 export const AssessmentService = {
   createAssessment,
   addQuestionToAssessment,
-  // publishAssessment
+  publishAssessment,
 };

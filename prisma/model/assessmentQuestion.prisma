@@ -4,6 +4,7 @@ model AssessmentQuestion {
   assessmentId String
   questionId   String
   options     QuestionOption[]
+   
 
   assessments   Assessment @relation(fields: [assessmentId],references: [id],onDelete:Cascade)
 
