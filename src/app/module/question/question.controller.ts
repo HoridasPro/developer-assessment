@@ -43,17 +43,17 @@ const getQuestionById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const deleteQuestion = catchAsync(async (req: Request, res: Response) => {
-//   const { id } = req.params;
+const deleteQuestion = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-//   await QuestionService.deleteQuestion(id as string);
+  await QuestionService.deleteQuestion(id as string);
 
-//   sendResponse(res, {
-//     success: true,
-//     message: "Question deleted successfully",
-//     data: null,
-//   });
-// });
+  sendResponse(res, {
+    success: true,
+    message: "Question deleted successfully",
+    data: null,
+  });
+});
 
 // const updateQuestion = catchAsync(async (req: Request, res: Response) => {
 //   const userId = req.data?.id;
@@ -86,6 +86,6 @@ export const QuestionController = {
   createQuestions,
   getAllQuestions,
   getQuestionById,
-  // deleteQuestion,
+  deleteQuestion,
   // updateQuestion,
 };
