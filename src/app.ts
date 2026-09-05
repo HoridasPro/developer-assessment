@@ -10,7 +10,7 @@ import config from "./app/config";
 import { AuhtRoutes } from "./app/module/auth/auth.route";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandle";
 import { UserRoutes } from "./app/module/user/user.route";
-import { AssessmentRoutes } from "./app/module/assessment/assessment.route";
+// import { AssessmentRoutes } from "./app/module/assessment/assessment.route";
 import { QuestionRoutes } from "./app/module/question/question.route";
 
 const app: Application = express();

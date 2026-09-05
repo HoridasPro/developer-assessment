@@ -48,18 +48,18 @@ const createQuestions = async (
   return result;
 };
 
-// const getAllQuestions = async () => {
-//   const questions = await prisma.question.findMany({
-//     include: {
-//       options: true,
-//     },
-//     orderBy: {
-//       createdAt: "desc",
-//     },
-//   });
+const getAllQuestions = async () => {
+  const questions = await prisma.question.findMany({
+    include: {
+      options: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-//   return questions;
-// };
+  return questions;
+};
 
 // const getQuestionById = async (questionId: string) => {
 //   const question = await prisma.question.findUnique({
@@ -173,7 +173,7 @@ const createQuestions = async (
 
 export const QuestionService = {
   createQuestions,
-  // getAllQuestions,
+  getAllQuestions,
   // getQuestionById,
   // deleteQuestion,
   // updateQuestion,
