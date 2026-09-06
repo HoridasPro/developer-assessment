@@ -13,6 +13,7 @@ model Question {
   options     QuestionOption[]
 
   assessments AssessmentQuestion[]
+  answers AssessmentAnswer[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
