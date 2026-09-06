@@ -135,10 +135,7 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
       userId,
     },
   });
-  console.log("========== PUBLISH DEBUG ==========");
-  console.log("userId get=", userId);
-  console.log("assessmentId get=", assessmentId);
-
+  
   if (!company) {
     throw new Error("Company profile not found");
   }
@@ -197,101 +194,7 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
   return publishedAssessment;
 };
 
-// const inviteCandidate = async (
-//   userId: string,
-//   assessmentId: string,
-//   candidateUserId: string,
-// ) => {
-
-//   const company = await prisma.companyProfile.findUnique({
-//     where: {
-//       userId,
-//     },
-//   });
-
-//   if (!company) {
-//     throw new Error("Company profile not found");
-//   }
-
-//   // Assessment company-এর কিনা check
-//   const assessment = await prisma.assessment.findFirst({
-//     where: {
-//       id: assessmentId,
-//       companyId: company.id,
-//     },
-//   });
-
-//   if (!assessment) {
-//     throw new Error("Assessment not found");
-//   }
-
-//   // Published কিনা
-//   if (assessment.status !== "PUBLISHED") {
-//     throw new Error(
-//       "Only published assessment can be sent to candidates",
-//     );
-//   }
-
-//   // Candidate আছে কিনা
-//   const candidate =
-//     await prisma.candidateProfile.findUnique({
-//       where: {
-//         id: candidateUserId,
-//       },
-//     });
-
-//   if (!candidate) {
-//     throw new Error("Candidate not found");
-//   }
-
-//   // আগে invite করা হয়েছে কিনা
-//   const existingInvitation =
-//     await prisma.assessmentInvitation.findUnique({
-//       where: {
-//         assessmentId_candidateId: {
-//           assessmentId,
-//           candidateId: candidateUserId,
-//         },
-//       },
-//     });
-
-//   if (existingInvitation) {
-//     throw new Error(
-//       "Candidate already invited to this assessment",
-//     );
-//   }
-
-//   // Invitation create
-//   const invitation =
-//     await prisma.assessmentInvitation.create({
-//       data: {
-//         assessmentId,
-//         candidateId: candidateUserId,
-//       },
-//       include: {
-//         assessment: {
-//           select: {
-//             id: true,
-//             title: true,
-//             description: true,
-//             duration: true,
-//             passingScore: true,
-//             maxAttempts: true,
-//             startAt: true,
-//             endAt: true,
-//             status: true,
-//           },
-//         },
-//         candidate: {
-//           select: {
-//             id: true,
-//           },
-//         },
-//       },
-//     });
-
-//   return invitation;
-// };
+ 
 const inviteCandidate = async (
   userId: string,
   assessmentId: string,

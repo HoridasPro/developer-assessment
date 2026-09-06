@@ -1,32 +1,32 @@
-// import { prisma } from "../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 
-// const getMyInvitations = async (userId: string) => {
-//   const invitations = await prisma.assessmentInvitation.findMany({
-//     where: {
-//       candidateUserId: userId,
-//     },
-//     include: {
-//       assessment: {
-//         select: {
-//           id: true,
-//           title: true,
-//           description: true,
-//           duration: true,
-//           passingScore: true,
-//           maxAttempts: true,
-//           startAt: true,
-//           endAt: true,
-//           status: true,
-//         },
-//       },
-//     },
-//     orderBy: {
-//       invitedAt: "desc",
-//     },
-//   });
+const getMyInvitations = async (userId: string) => {
+  const invitations = await prisma.assessmentInvitation.findMany({
+    where: {
+      candidateUserId: userId,
+    },
+    include: {
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          duration: true,
+          passingScore: true,
+          maxAttempts: true,
+          startAt: true,
+          endAt: true,
+          status: true,
+        },
+      },
+    },
+    orderBy: {
+      invitedAt: "desc",
+    },
+  });
 
-//   return invitations;
-// };
+  return invitations;
+};
 
 // const acceptInvitation = async (
 //   userId: string,
@@ -89,7 +89,7 @@
 //   return updatedInvitation;
 // };
 
-// export const CandidateAssessmentService = {
-//   getMyInvitations: getMyInvitations,
-//   acceptInvitation,
-// };
+export const InvitationServices = {
+  getMyInvitations,
+  // acceptInvitation,
+};

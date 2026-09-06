@@ -12,6 +12,7 @@ import { globalErrorHandler } from "./app/middleware/globalErrorHandle";
 import { UserRoutes } from "./app/module/user/user.route";
 import { AssessmentRoutes } from "./app/module/assessment/assessment.route";
 import { QuestionRoutes } from "./app/module/question/question.route";
+import { InvitationRoutes } from "./app/module/invitation/invitation.route";
 
 const app: Application = express();
 
@@ -28,8 +29,9 @@ app.use(cookieParser());
 
 app.use("/api/v1/auth", AuhtRoutes);
 app.use("/api/v1/users", UserRoutes);
-app.use("/api/v1/", AssessmentRoutes);
+app.use("/api/v1", AssessmentRoutes);
 app.use("/api/v1/questions", QuestionRoutes);
+app.use("/api/v1/invitations", InvitationRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("Welcome developer assessment & coding platform");

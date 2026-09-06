@@ -23,7 +23,7 @@ router.patch(
 );
 
 router.post(
-  "/invite/:assessmentId",
+  "/asign/:assessmentId",
   auth(Role.COMPANY),
   AssessmentController.inviteCandidate,
 );
