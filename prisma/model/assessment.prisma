@@ -16,6 +16,7 @@ model Assessment {
 
   questions    AssessmentQuestion[]
   invitation   AssessmentInvitation[]
+  attempt      AssessmentAttempt[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

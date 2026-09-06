@@ -11,10 +11,16 @@ router.get(
   InvitationController.getMyInvitations,
 );
 
-// router.patch(
-//   "/invitations/:invitationId/accept",
-//   auth(Role.CANDIDATE),
+router.patch(
+  "/status/:invitationId",
+  auth(Role.CANDIDATE),
+  InvitationController.acceptInvitation,
+);
 
-// );
+router.post(
+  "/start/:assessmentId",
+  auth(Role.CANDIDATE),
+  InvitationController.startAssessment,
+);
 
 export const InvitationRoutes = router;

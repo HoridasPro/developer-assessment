@@ -1,0 +1,20 @@
+model AssessmentAttempt {
+  id           String   @id @default(uuid())
+  assessmentId String
+  candidateId  String
+
+  attemptNumber Int
+  status        AttemptStatus @default(IN_PROGRESS)
+
+  startedAt    DateTime @default(now())
+  submittedAt  DateTime?
+  score        Float?
+  passed       Boolean?
+
+  assessment Assessment @relation(fields: [assessmentId],references: [id],onDelete: Cascade)
+
+  candidate User @relation(fields: [candidateId],references: [id])
+
+  @@unique([assessmentId, candidateId, attemptNumber])
+  @@map("assessmentAttempts")
+}

@@ -135,7 +135,7 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
       userId,
     },
   });
-  
+
   if (!company) {
     throw new Error("Company profile not found");
   }
@@ -194,7 +194,6 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
   return publishedAssessment;
 };
 
- 
 const inviteCandidate = async (
   userId: string,
   assessmentId: string,
@@ -296,6 +295,7 @@ const inviteCandidate = async (
 
   return invitation;
 };
+
 export const AssessmentService = {
   createAssessment,
   addQuestionToAssessment,
