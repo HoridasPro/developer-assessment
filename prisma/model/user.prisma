@@ -8,6 +8,7 @@ model User {
    
   candidateProfile CandidateProfile?
   companyProfile   CompanyProfile?
+  invitaions   AssessmentInvitation[]
   status            ActiveStatus          @default(ACTIVE)
   isActive          Boolean               @default(true)
   createdAt         DateTime              @default(now())

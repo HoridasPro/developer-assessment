@@ -149,6 +149,7 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
       companyId: company.id,
     },
   });
+  console.log("now get assessment", assessment);
 
   if (!assessment) {
     throw new Error("Assessment not found");
@@ -196,8 +197,205 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
   return publishedAssessment;
 };
 
+// const inviteCandidate = async (
+//   userId: string,
+//   assessmentId: string,
+//   candidateUserId: string,
+// ) => {
+
+//   const company = await prisma.companyProfile.findUnique({
+//     where: {
+//       userId,
+//     },
+//   });
+
+//   if (!company) {
+//     throw new Error("Company profile not found");
+//   }
+
+//   // Assessment company-এর কিনা check
+//   const assessment = await prisma.assessment.findFirst({
+//     where: {
+//       id: assessmentId,
+//       companyId: company.id,
+//     },
+//   });
+
+//   if (!assessment) {
+//     throw new Error("Assessment not found");
+//   }
+
+//   // Published কিনা
+//   if (assessment.status !== "PUBLISHED") {
+//     throw new Error(
+//       "Only published assessment can be sent to candidates",
+//     );
+//   }
+
+//   // Candidate আছে কিনা
+//   const candidate =
+//     await prisma.candidateProfile.findUnique({
+//       where: {
+//         id: candidateUserId,
+//       },
+//     });
+
+//   if (!candidate) {
+//     throw new Error("Candidate not found");
+//   }
+
+//   // আগে invite করা হয়েছে কিনা
+//   const existingInvitation =
+//     await prisma.assessmentInvitation.findUnique({
+//       where: {
+//         assessmentId_candidateId: {
+//           assessmentId,
+//           candidateId: candidateUserId,
+//         },
+//       },
+//     });
+
+//   if (existingInvitation) {
+//     throw new Error(
+//       "Candidate already invited to this assessment",
+//     );
+//   }
+
+//   // Invitation create
+//   const invitation =
+//     await prisma.assessmentInvitation.create({
+//       data: {
+//         assessmentId,
+//         candidateId: candidateUserId,
+//       },
+//       include: {
+//         assessment: {
+//           select: {
+//             id: true,
+//             title: true,
+//             description: true,
+//             duration: true,
+//             passingScore: true,
+//             maxAttempts: true,
+//             startAt: true,
+//             endAt: true,
+//             status: true,
+//           },
+//         },
+//         candidate: {
+//           select: {
+//             id: true,
+//           },
+//         },
+//       },
+//     });
+
+//   return invitation;
+// };
+const inviteCandidate = async (
+  userId: string,
+  assessmentId: string,
+  candidateUserId: string,
+) => {
+  // Company profile check
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
+
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
+
+  // Assessment এই company-এর কিনা check
+  const assessment = await prisma.assessment.findFirst({
+    where: {
+      id: assessmentId,
+      companyId: company.id,
+    },
+  });
+
+  if (!assessment) {
+    throw new Error("Assessment not found");
+  }
+
+  // Assessment published কিনা
+  if (assessment.status !== "PUBLISHED") {
+    throw new Error("Only published assessment can be sent to candidates");
+  }
+
+  // Candidate User আছে কিনা এবং role CANDIDATE কিনা
+  const candidate = await prisma.user.findUnique({
+    where: {
+      id: candidateUserId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  });
+
+  if (!candidate) {
+    throw new Error("Candidate not found");
+  }
+
+  if (candidate.role !== "CANDIDATE") {
+    throw new Error("This user is not a candidate");
+  }
+
+  // আগে invite করা হয়েছে কিনা
+  const existingInvitation = await prisma.assessmentInvitation.findUnique({
+    where: {
+      assessmentId_candidateUserId: {
+        assessmentId,
+        candidateUserId,
+      },
+    },
+  });
+
+  if (existingInvitation) {
+    throw new Error("Candidate already invited to this assessment");
+  }
+
+  // Invitation create
+  const invitation = await prisma.assessmentInvitation.create({
+    data: {
+      assessmentId,
+      candidateUserId,
+    },
+    include: {
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          duration: true,
+          passingScore: true,
+          maxAttempts: true,
+          startAt: true,
+          endAt: true,
+          status: true,
+        },
+      },
+      candidate: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+  });
+
+  return invitation;
+};
 export const AssessmentService = {
   createAssessment,
   addQuestionToAssessment,
   publishAssessment,
+  inviteCandidate,
 };

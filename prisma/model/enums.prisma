@@ -33,3 +33,9 @@ enum Difficulty {
   MEDIUM
   HARD
 }
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}

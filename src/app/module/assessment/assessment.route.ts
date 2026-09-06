@@ -22,4 +22,10 @@ router.patch(
   AssessmentController.publishAssessment,
 );
 
+router.post(
+  "/invite/:assessmentId",
+  auth(Role.COMPANY),
+  AssessmentController.inviteCandidate,
+);
+
 export const AssessmentRoutes = router;

@@ -67,8 +67,33 @@ const publishAssessment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const inviteCandidate = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.data?.id;
+
+  const { assessmentId } = req.params;
+
+  const { candidateUserId } = req.body;
+
+  if (!userId) {
+    throw new Error("User not found");
+  }
+
+  const result = await AssessmentService.inviteCandidate(
+    userId,
+    assessmentId as string,
+    candidateUserId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Candidate invited successfully",
+    data: result,
+  });
+});
+
 export const AssessmentController = {
   createAssessmentDB,
   addQuestionToAssessmentDB,
   publishAssessment,
+  inviteCandidate,
 };

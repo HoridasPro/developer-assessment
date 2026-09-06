@@ -144,6 +144,23 @@ const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
       });
     }
   }
+  if (payload.name !== undefined || payload.profilePhoto !== undefined) {
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+
+      data: {
+        ...(payload.name !== undefined && {
+          name: payload.name,
+        }),
+
+        ...(payload.profilePhoto !== undefined && {
+          profilePhoto: payload.profilePhoto,
+        }),
+      },
+    });
+  }
 
   if (user.role === "COMPANY") {
     if (payload.candidateProfile !== undefined) {
