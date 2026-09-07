@@ -27,10 +27,10 @@ router.get(
   AttemptController.getAttemptResult,
 );
 
-// router.get(
-//   "/my-results",
-//   auth(Role.CANDIDATE),
-//   AttemptController.getAllMyAssessmentResults,
-// );
+router.get(
+  "/my-results",
+  auth(Role.CANDIDATE),
+  AttemptController.getAllMyAssessmentResults,
+);
 
 export const AttemptRoutes = router;

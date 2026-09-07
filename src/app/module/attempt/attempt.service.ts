@@ -426,64 +426,64 @@ const getAttemptResult = async (attemptId: string, candidateId: string) => {
   };
 };
 
-// const getAllMyAssessmentResults = async (candidateId: string) => {
-//   const attempts = await prisma.assessmentAttempt.findMany({
-//     where: {
-//       candidateId,
-//       status: "COMPLETED",
-//     },
-//     orderBy: {
-//       submittedAt: "desc",
-//     },
-//     include: {
-//       assessment: {
-//         include: {
-//           questions: {
-//             include: {
-//               questions: true,
-//             },
-//           },
-//         },
-//       },
-//     },
-//   });
+const getAllMyAssessmentResults = async (candidateId: string) => {
+  const attempts = await prisma.assessmentAttempt.findMany({
+    where: {
+      candidateId,
+      status: "COMPLETED",
+    },
+    orderBy: {
+      submittedAt: "desc",
+    },
+    include: {
+      assessment: {
+        include: {
+          questions: {
+            include: {
+              questions: true,
+            },
+          },
+        },
+      },
+    },
+  });
 
-//   return attempts.map((attempt) => {
-//     const totalMarks = attempt.assessment.questions.reduce((total, item) => {
-//       return total + item.questions.marks;
-//     }, 0);
+  return attempts.map((attempt) => {
+    const totalMarks = attempt.assessment.questions.reduce((total, item) => {
+      return total + item.questions.marks;
+    }, 0);
 
-//     const obtainedMarks = attempt.score ?? 0;
+    const obtainedMarks = attempt.score ?? 0;
 
-//     const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+    const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
 
-//     return {
-//       attemptId: attempt.id,
-//       assessmentId: attempt.assessmentId,
+    return {
+      attemptId: attempt.id,
+      assessmentId: attempt.assessmentId,
 
-//       assessmentTitle: attempt.assessment.title,
+      assessmentTitle: attempt.assessment.title,
 
-//       attemptNumber: attempt.attemptNumber,
+      attemptNumber: attempt.attemptNumber,
 
-//       status: attempt.status,
+      status: attempt.status,
 
-//       totalMarks,
-//       obtainedMarks,
+      totalMarks,
+      obtainedMarks,
 
-//       percentage: Number(percentage.toFixed(2)),
+      percentage: Number(percentage.toFixed(2)),
 
-//       passed: attempt.passed ?? false,
+      passed: attempt.passed ?? false,
 
-//       startedAt: attempt.startedAt,
-//       submittedAt: attempt.submittedAt,
-//     };
-//   });
-// };
+      startedAt: attempt.startedAt,
+      submittedAt: attempt.submittedAt,
+    };
+  });
+};
 
 export const AttemptServices = {
   getAttemptQuestions,
   submitAttempt,
   evaluateAttempt,
   getAttemptResult,
-  // getAllMyAssessmentResults,
+  getAllMyAssessmentResults,
 };
