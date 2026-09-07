@@ -11,4 +11,10 @@ router.get(
   AttemptController.getAttemptQuestions,
 );
 
+router.post(
+  "/submit/:attemptId",
+  auth(Role.CANDIDATE),
+  AttemptController.submitAttempt,
+);
+
 export const AttemptRoutes = router;

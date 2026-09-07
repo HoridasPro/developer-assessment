@@ -34,8 +34,8 @@ app.use("/api/v1/users", UserRoutes);
 app.use("/api/v1", AssessmentRoutes);
 app.use("/api/v1/questions", QuestionRoutes);
 app.use("/api/v1/invitations", InvitationRoutes);
-app.use("/api/v1/attempt", AttemptRoutes);
-app.use("/api/v1/attempt", AnswerRoutes);
+app.use("/api/v1/attempts", AttemptRoutes);
+app.use("/api/v1/attempts", AnswerRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("Welcome developer assessment & coding platform");

@@ -1,6 +1,4 @@
-import { title } from "node:process";
 import { prisma } from "../../lib/prisma";
-import { Difficulty } from "../../../../generated/prisma/enums";
 
 const getAttemptQuestions = async (userId: string, attemptId: string) => {
   // 1. Attempt check
@@ -67,6 +65,119 @@ const getAttemptQuestions = async (userId: string, attemptId: string) => {
   };
 };
 
+
+const submitAttempt = async (
+  attemptId: string,
+  candidateId: string
+) => {
+
+  // 1. Find attempt
+  const attempt = await prisma.assessmentAttempt.findUnique({
+    where: {
+      id: attemptId,
+    },
+
+    include: {
+      answers: {
+        include: {
+          question: {
+            include: {
+              options: true,
+            },
+          },
+
+          selectedOption: true,
+        },
+      },
+    },
+  });
+
+
+  // 2. Attempt not found
+  if (!attempt) {
+    throw new Error("Assessment attempt not found");
+  }
+
+
+  // 3. Candidate ownership check
+  if (attempt.candidateId !== candidateId) {
+    throw new Error(
+      "You are not allowed to submit this attempt"
+    );
+  }
+
+
+  // 4. Check attempt status
+  if (attempt.status !== "IN_PROGRESS") {
+    throw new Error(
+      "Assessment attempt is no longer active"
+    );
+  }
+
+ 
+  let mcqScore = 0;
+
+  for (const answer of attempt.answers) {
+
+    // Only MCQ
+    if (
+      answer.question.type === "MCQ" &&
+      answer.selectedOptionId
+    ) {
+
+      const selectedOption =
+        answer.question.options.find(
+          (option) =>
+            option.id === answer.selectedOptionId
+        );
+
+
+      // Correct answer
+      if (selectedOption?.isCorrect) {
+        mcqScore += answer.question.marks;
+      }
+    }
+  }
+
+
+   
+  const submittedAttempt =
+    await prisma.assessmentAttempt.update({
+      where: {
+        id: attemptId,
+      },
+
+      data: {
+        status: "SUBMITTED",
+        submittedAt: new Date(),
+        score: mcqScore,
+      },
+    });
+
+
+  
+  return {
+    attemptId: submittedAttempt.id,
+    assessmentId: submittedAttempt.assessmentId,
+    candidateId: submittedAttempt.candidateId,
+    attemptNumber: submittedAttempt.attemptNumber,
+
+    status: submittedAttempt.status,
+
+    startedAt: submittedAttempt.startedAt,
+
+    submittedAt: submittedAttempt.submittedAt,
+
+    score: submittedAttempt.score,
+
+    message:
+      "Assessment submitted successfully. Written and coding answers are pending evaluation.",
+  };
+};
+
+
+ 
 export const AttemptServices = {
   getAttemptQuestions,
+  submitAttempt
 };
