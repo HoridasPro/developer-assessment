@@ -42,7 +42,29 @@ const submitAttempt = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const evaluateAttempt = catchAsync(async (req: Request, res: Response) => {
+  const { attemptId } = req.params;
+
+  const candidateId = req.data?.id;
+
+  if (!candidateId) {
+    throw new Error("User not logged in");
+  }
+
+  const result = await AttemptServices.evaluateAttempt(
+    attemptId as string,
+    candidateId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Assessment evaluated successfully",
+    data: result,
+  });
+});
+
 export const AttemptController = {
   getAttemptQuestions,
   submitAttempt,
+  evaluateAttempt,
 };
