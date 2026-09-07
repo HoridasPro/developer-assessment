@@ -3,5 +3,4 @@ export interface ISubmitAnswerPayload {
   selectedOptionId?: string;
   writtenAnswer?: string;
   codeAnswer?: string;
-  language?: string;
 }

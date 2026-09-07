@@ -13,4 +13,5 @@ model AssessmentAnswer {
   selectedOption QuestionOption?   @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
 
   @@unique([attemptId, questionId])
+  @@map("assessmentAnswers")
 }
