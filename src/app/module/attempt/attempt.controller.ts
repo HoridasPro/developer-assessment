@@ -56,15 +56,55 @@ const evaluateAttempt = catchAsync(async (req: Request, res: Response) => {
     candidateId,
   );
 
-  sendResponse(res, {
+  res.status(200).json({
     success: true,
     message: "Assessment evaluated successfully",
     data: result,
   });
 });
+const getAttemptResult = catchAsync(async (req: Request, res: Response) => {
+  const { attemptId } = req.params;
+
+  const candidateId = req.data?.id;
+
+  if (!candidateId) {
+    throw new Error("User not logged in");
+  }
+
+  const result = await AttemptServices.getAttemptResult(
+    attemptId as string,
+    candidateId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Assessment result fetched successfully",
+    data: result,
+  });
+});
+
+// const getAllMyAssessmentResults = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const candidateId = req.data?.id;
+
+//     if (!candidateId) {
+//       throw new Error("User not logged in");
+//     }
+
+//     const result = await AttemptServices.getAllMyAssessmentResults(candidateId);
+
+//     sendResponse(res, {
+//       success: true,
+//       message: "Assessment history fetched successfully",
+//       data: result,
+//     });
+//   },
+// );
 
 export const AttemptController = {
   getAttemptQuestions,
   submitAttempt,
   evaluateAttempt,
+  getAttemptResult,
+  // getAllMyAssessmentResults,
 };

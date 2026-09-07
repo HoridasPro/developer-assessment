@@ -21,5 +21,16 @@ router.post(
   auth(Role.CANDIDATE),
   AttemptController.evaluateAttempt,
 );
+router.get(
+  "/result/:attemptId",
+  auth(Role.CANDIDATE),
+  AttemptController.getAttemptResult,
+);
+
+// router.get(
+//   "/my-results",
+//   auth(Role.CANDIDATE),
+//   AttemptController.getAllMyAssessmentResults,
+// );
 
 export const AttemptRoutes = router;
