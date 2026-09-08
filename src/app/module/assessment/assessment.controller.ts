@@ -4,6 +4,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 
 import { AssessmentService } from "./assessment.service";
+import { prisma } from "../../lib/prisma";
 
 const createAssessmentDB = catchAsync(async (req: Request, res: Response) => {
   const userId = req.data?.id;
@@ -20,6 +21,37 @@ const createAssessmentDB = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// const addQuestionToAssessmentDB = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const userId = req.data?.id;
+
+//     if (!userId) {
+//       throw new Error("User not authenticated");
+//     }
+
+//     const { assessmentId } = req.params;
+//     if (Array.isArray(assessmentId)) {
+//       throw new Error("Invalid assessment ID");
+//     }
+
+//     const { questionId, order, marks } = req.body;
+
+//     const result = await AssessmentService.addQuestionToAssessment(
+//       userId,
+//       assessmentId,
+//       questionId,
+//       order,
+//       marks,
+//     );
+
+//     sendResponse(res, {
+//       success: true,
+//       message: "Question added to assessment successfully",
+//       data: result,
+//     });
+//   },
+// );
+
 const addQuestionToAssessmentDB = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.data?.id;
@@ -33,24 +65,26 @@ const addQuestionToAssessmentDB = catchAsync(
       throw new Error("Invalid assessment ID");
     }
 
-    const { questionId, order, marks } = req.body;
+    // req.body থেকে options Array নেওয়া হচ্ছে
+    const { options } = req.body;
 
-    const result = await AssessmentService.addQuestionToAssessment(
+    if (!options || !Array.isArray(options) || options.length === 0) {
+      throw new Error("Please provide an array of questions in 'options'");
+    }
+
+    const result = await AssessmentService.addQuestionsToAssessment(
       userId,
       assessmentId,
-      questionId,
-      order,
-      marks,
+      options,
     );
 
-    res.status(201).json({
+    sendResponse(res, {
       success: true,
-      message: "Question added to assessment successfully",
+      message: "Questions added to assessment successfully",
       data: result,
     });
   },
 );
-
 const publishAssessment = catchAsync(async (req: Request, res: Response) => {
   const userId = req.data?.id as string;
   const { assessmentId } = req.params;
@@ -91,11 +125,9 @@ const inviteCandidate = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 export const AssessmentController = {
   createAssessmentDB,
   addQuestionToAssessmentDB,
   publishAssessment,
   inviteCandidate,
- 
 };

@@ -7,7 +7,6 @@ import { IUserLoginPayload, IUserRegisterPayload } from "./auth.interface";
 import { SignOptions } from "jsonwebtoken";
 import { Role } from "../../../../generated/prisma/enums";
 
-// User Register
 const registerUser = async (payload: IUserRegisterPayload) => {
   const { name, password, profilePhoto, role, status, isActive } = payload;
   const email = payload.email.trim().toLowerCase();
@@ -28,10 +27,6 @@ const registerUser = async (payload: IUserRegisterPayload) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  // const accountStatus =
-  //   payload.role === Role.RECRUITER
-  //     ? AccountStatus.PENDING
-  //     : AccountStatus.APPROVED;
 
   const newUser = await prisma.user.create({
     data: {
@@ -69,12 +64,6 @@ const userLogin = async (payload: IUserLoginPayload) => {
     throw new Error("Password is not matched");
   }
 
-  // if (
-  //   user.role === Role.RECRUITER &&
-  //   user.accountStatus !== AccountStatus.APPROVED
-  // ) {
-  //   throw new Error("Your recruiter account is not approved by admin yet");
-  // }
   const jwt_access_secret = config.jwt_access_secret;
   const jwt_refresh_secret = config.jwt_refresh_secret;
 
@@ -118,14 +107,12 @@ const refreshToken = async (token: string) => {
     throw new Error("Invalid or expired refresh token");
   }
 
-  // 2. Token payload
   const payload = verifiedToken.data as {
     id: string;
     email: string;
     role: Role;
   };
 
-  // 3. User check
   const user = await prisma.user.findUnique({
     where: {
       id: payload.id,
@@ -136,7 +123,6 @@ const refreshToken = async (token: string) => {
     throw new Error("User not found");
   }
 
-  // 4. User active check
   if (!user.isActive) {
     throw new Error("User account is inactive");
   }

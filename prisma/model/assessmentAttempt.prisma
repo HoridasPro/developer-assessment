@@ -7,9 +7,11 @@ model AssessmentAttempt {
   status        AttemptStatus @default(IN_PROGRESS)
 
   startedAt    DateTime @default(now())
+  expiresAt    DateTime?
   submittedAt  DateTime?
   score        Float?
   passed       Boolean?
+  companyId    String
 
   assessment Assessment @relation(fields: [assessmentId],references: [id],onDelete: Cascade)
 

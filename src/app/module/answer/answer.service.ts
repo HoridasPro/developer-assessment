@@ -1,14 +1,11 @@
 import { prisma } from "../../lib/prisma";
 import { ISubmitAnswerPayload } from "./answer.interface";
 
-const saveAnswer = async (
+const saveAnswers = async (
   userId: string,
   attemptId: string,
-  payload: ISubmitAnswerPayload,
+  payload: ISubmitAnswerPayload[],
 ) => {
-  const { questionId, selectedOptionId, writtenAnswer, codeAnswer } = payload;
-
-  // 1. Attempt check
   const attempt = await prisma.assessmentAttempt.findUnique({
     where: {
       id: attemptId,
@@ -19,131 +16,205 @@ const saveAnswer = async (
     throw new Error("Assessment attempt not found");
   }
 
-  // 2. Candidate ownership check
   if (attempt.candidateId !== userId) {
     throw new Error("You are not allowed to access this attempt");
   }
 
-  // 3. Attempt status check
   if (attempt.status !== "IN_PROGRESS") {
     throw new Error("This assessment attempt is no longer active");
   }
 
-  // 4. Question check
-  const assessmentQuestion = await prisma.assessmentQuestion.findFirst({
-    where: {
-      assessmentId: attempt.assessmentId,
-      questionId,
-    },
-    include: {
-      questions: {
-        include: {
-          options: true,
-        },
-      },
-    },
-  });
+  const results = [];
 
-  if (!assessmentQuestion) {
-    throw new Error("Question does not belong to this assessment");
-  }
+  for (const answerPayload of payload) {
+    const { questionId, selectedOptionId, writtenAnswer, codeAnswer } =
+      answerPayload;
 
-  const question = assessmentQuestion.questions;
-
-  // 5. Validate answer according to question type
-
-  // MCQ
-  if (question.type === "MCQ") {
-    if (!selectedOptionId) {
-      throw new Error("Please select an option");
-    }
-
-    const option = await prisma.questionOption.findFirst({
+    const assessmentQuestion = await prisma.assessmentQuestion.findFirst({
       where: {
-        id: selectedOptionId,
+        assessmentId: attempt.assessmentId,
         questionId,
+      },
+      include: {
+        questions: {
+          include: {
+            options: true,
+          },
+        },
       },
     });
 
-    if (!option) {
-      throw new Error("Selected option does not belong to this question");
+    if (!assessmentQuestion) {
+      throw new Error(
+        `Question ${questionId} does not belong to this assessment`,
+      );
     }
-  }
 
-  // WRITTEN
-  if (question.type === "WRITTEN") {
-    if (!writtenAnswer || writtenAnswer.trim() === "") {
-      throw new Error("Written answer is required");
+    const question = assessmentQuestion.questions;
+
+    // MCQ
+    if (question.type === "MCQ") {
+      if (!selectedOptionId) {
+        throw new Error(
+          `Selected option is required for question ${questionId}`,
+        );
+      }
+
+      const option = await prisma.questionOption.findFirst({
+        where: {
+          id: selectedOptionId,
+          questionId,
+        },
+      });
+
+      if (!option) {
+        throw new Error(
+          `Selected option does not belong to question ${questionId}`,
+        );
+      }
     }
-  }
 
-  // CODING
-  if (question.type === "CODING") {
-    if (!codeAnswer || codeAnswer.trim() === "") {
-      throw new Error("Code answer is required");
+    // WRITTEN
+    if (question.type === "WRITTEN") {
+      if (!writtenAnswer || writtenAnswer.trim() === "") {
+        throw new Error(
+          `Written answer is required for question ${questionId}`,
+        );
+      }
     }
-  }
 
-  // 6. Prepare answer data
-  const answerData = {
-    selectedOptionId: question.type === "MCQ" ? selectedOptionId : null,
+    // CODING
+    if (question.type === "CODING") {
+      if (!codeAnswer || codeAnswer.trim() === "") {
+        throw new Error(`Code answer is required for question ${questionId}`);
+      }
+    }
 
-    writtenAnswer: question.type === "WRITTEN" ? writtenAnswer : null,
+    const answerData = {
+      selectedOptionId: question.type === "MCQ" ? selectedOptionId : null,
 
-    codeAnswer: question.type === "CODING" ? codeAnswer : null,
-  };
+      writtenAnswer: question.type === "WRITTEN" ? writtenAnswer : null,
 
-  // 7. Create or update answer
-  const answer = await prisma.assessmentAnswer.upsert({
-    where: {
-      attemptId_questionId: {
+      codeAnswer: question.type === "CODING" ? codeAnswer : null,
+    };
+
+    const answer = await prisma.assessmentAnswer.upsert({
+      where: {
+        attemptId_questionId: {
+          attemptId,
+          questionId,
+        },
+      },
+
+      update: answerData,
+
+      create: {
         attemptId,
         questionId,
+        ...answerData,
       },
-    },
 
-    update: answerData,
+      include: {
+        question: true,
+        selectedOption: true,
+      },
+    });
 
-    create: {
-      attemptId,
-      questionId,
-      ...answerData,
-    },
+    results.push({
+      id: answer.id,
+      attemptId: answer.attemptId,
+      questionId: answer.questionId,
+      selectedOptionId: answer.selectedOptionId,
 
-    include: {
-      question: true,
-      selectedOption: true,
+      selectedOption: answer.selectedOption
+        ? {
+            id: answer.selectedOption.id,
+            text: answer.selectedOption.text,
+          }
+        : null,
+
+      writtenAnswer: answer.writtenAnswer,
+      codeAnswer: answer.codeAnswer,
+
+      createdAt: answer.createdAt,
+      updatedAt: answer.updatedAt,
+    });
+  }
+
+  return results;
+};
+
+const evaluateAnswers = async (
+  attemptId: string,
+  answers: { questionId: string; marks: number }[],
+) => {
+  // Attempt আছে কিনা check
+  const attempt = await prisma.assessmentAttempt.findUnique({
+    where: {
+      id: attemptId,
     },
   });
 
-  // 8. Candidate response
+  if (!attempt) {
+    throw new Error("Assessment attempt not found");
+  }
+
+  for (const item of answers) {
+    // এই attempt-এর এই question-এর answer বের করি
+    const answer = await prisma.assessmentAnswer.findFirst({
+      where: {
+        attemptId,
+        questionId: item.questionId,
+      },
+      include: {
+        question: true,
+      },
+    });
+
+    if (!answer) {
+      throw new Error(`Answer not found for question: ${item.questionId}`);
+    }
+
+    // শুধু Written এবং Coding manually evaluate হবে
+    if (
+      answer.question.type !== "WRITTEN" &&
+      answer.question.type !== "CODING"
+    ) {
+      throw new Error(
+        "Only WRITTEN and CODING questions can be manually evaluated",
+      );
+    }
+
+    // Marks negative কিনা check
+    if (item.marks < 0) {
+      throw new Error("Marks cannot be negative");
+    }
+
+    // Maximum marks-এর বেশি কিনা check
+    if (item.marks > answer.question.marks) {
+      throw new Error(
+        `Marks cannot be greater than ${answer.question.marks} for this question`,
+      );
+    }
+
+    // Marks save
+    await prisma.assessmentAnswer.update({
+      where: {
+        id: answer.id,
+      },
+      data: {
+        obtainedMarks: item.marks,
+        evaluated: true,
+      },
+    });
+  }
+
   return {
-    id: answer.id,
-    attemptId: answer.attemptId,
-    questionId: answer.questionId,
-
-    // MCQ
-    selectedOptionId: answer.selectedOptionId,
-
-    // Optional: selected option text
-    selectedOption: answer.selectedOption
-      ? {
-          id: answer.selectedOption.id,
-          text: answer.selectedOption.text,
-        }
-      : null,
-
-    // Written
-    writtenAnswer: answer.writtenAnswer,
-
-    // Coding
-    codeAnswer: answer.codeAnswer,
-
-    createdAt: answer.createdAt,
-    updatedAt: answer.updatedAt,
+    message: "Answers evaluated successfully",
   };
 };
 
 export const AnswerServices = {
-  saveAnswer,
+  saveAnswers,
+  evaluateAnswers,
 };

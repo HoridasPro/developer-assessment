@@ -1,5 +1,3 @@
-
-
 model Question {
   id          String       @id @default(uuid())
   title       String

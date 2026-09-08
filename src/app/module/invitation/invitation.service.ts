@@ -28,19 +28,15 @@ const getMyInvitations = async (userId: string) => {
   return invitations;
 };
 
-const acceptInvitation = async (
-  userId: string,
-  invitationId: string,
-) => {
-  const invitation =
-    await prisma.assessmentInvitation.findUnique({
-      where: {
-        id: invitationId,
-      },
-      include: {
-        assessment: true,
-      },
-    });
+const acceptInvitation = async (userId: string, invitationId: string) => {
+  const invitation = await prisma.assessmentInvitation.findUnique({
+    where: {
+      id: invitationId,
+    },
+    include: {
+      assessment: true,
+    },
+  });
 
   if (!invitation) {
     throw new Error("Invitation not found");
@@ -72,22 +68,98 @@ const acceptInvitation = async (
     }
   }
 
-  const updatedInvitation =
-    await prisma.assessmentInvitation.update({
-      where: {
-        id: invitationId,
-      },
-      data: {
-        status: "ACCEPTED",
-        acceptedAt: new Date(),
-      },
-      include: {
-        assessment: true,
-      },
-    });
+  const updatedInvitation = await prisma.assessmentInvitation.update({
+    where: {
+      id: invitationId,
+    },
+    data: {
+      status: "ACCEPTED",
+      acceptedAt: new Date(),
+    },
+    include: {
+      assessment: true,
+    },
+  });
 
   return updatedInvitation;
 };
+
+// const startAssessment = async (userId: string, assessmentId: string) => {
+//   const assessment = await prisma.assessment.findUnique({
+//     where: {
+//       id: assessmentId,
+//     },
+//   });
+
+//   if (!assessment) {
+//     throw new Error("Assessment not found");
+//   }
+
+//   if (assessment.status !== "PUBLISHED") {
+//     throw new Error("Assessment is not published");
+//   }
+
+//   const now = new Date();
+
+//   if (assessment.startAt && now < assessment.startAt) {
+//     throw new Error("Assessment has not started yet");
+//   }
+
+//   if (assessment.endAt && now > assessment.endAt) {
+//     throw new Error("Assessment deadline has passed");
+//   }
+
+//   const invitation = await prisma.assessmentInvitation.findFirst({
+//     where: {
+//       assessmentId: assessmentId,
+//       candidateUserId: userId,
+//       status: "ACCEPTED",
+//     },
+//   });
+
+//   if (!invitation) {
+//     throw new Error("You are not accepted for this assessment");
+//   }
+
+//   const attempts = await prisma.assessmentAttempt.findMany({
+//     where: {
+//       assessmentId,
+//       candidateId: userId,
+//     },
+//     orderBy: {
+//       attemptNumber: "desc",
+//     },
+//   });
+
+//   if (attempts.length >= assessment.maxAttempts) {
+//     throw new Error("You have reached the maximum number of attempts");
+//   }
+
+//   const activeAttempt = attempts.find(
+//     (attempt) => attempt.status === "IN_PROGRESS",
+//   );
+
+//   if (activeAttempt) {
+//     return activeAttempt;
+//   }
+
+//   const attemptNumber = attempts.length + 1;
+
+//   const attempt = await prisma.assessmentAttempt.create({
+//     data: {
+//       assessmentId,
+//       candidateId: userId,
+//       attemptNumber,
+//       status: "IN_PROGRESS",
+//       startedAt: new Date(),
+//     },
+//     include: {
+//       assessment: true,
+//     },
+//   });
+
+//   return attempt;
+// };
 
 const startAssessment = async (userId: string, assessmentId: string) => {
   const assessment = await prisma.assessment.findUnique({
@@ -100,24 +172,20 @@ const startAssessment = async (userId: string, assessmentId: string) => {
     throw new Error("Assessment not found");
   }
 
-  // 2. Assessment published কিনা
   if (assessment.status !== "PUBLISHED") {
     throw new Error("Assessment is not published");
   }
 
   const now = new Date();
 
-  // 3. Start time check
   if (assessment.startAt && now < assessment.startAt) {
     throw new Error("Assessment has not started yet");
   }
 
-  // 4. End time check
   if (assessment.endAt && now > assessment.endAt) {
     throw new Error("Assessment deadline has passed");
   }
 
-  // 5. Candidate invitation check
   const invitation = await prisma.assessmentInvitation.findFirst({
     where: {
       assessmentId: assessmentId,
@@ -130,7 +198,6 @@ const startAssessment = async (userId: string, assessmentId: string) => {
     throw new Error("You are not accepted for this assessment");
   }
 
-  // 6. আগের attempt গুলো বের করা
   const attempts = await prisma.assessmentAttempt.findMany({
     where: {
       assessmentId,
@@ -141,12 +208,10 @@ const startAssessment = async (userId: string, assessmentId: string) => {
     },
   });
 
-  // 7. Max attempts check
   if (attempts.length >= assessment.maxAttempts) {
     throw new Error("You have reached the maximum number of attempts");
   }
 
-  // 8. আগে কোনো attempt চলছে কিনা
   const activeAttempt = attempts.find(
     (attempt) => attempt.status === "IN_PROGRESS",
   );
@@ -155,17 +220,24 @@ const startAssessment = async (userId: string, assessmentId: string) => {
     return activeAttempt;
   }
 
-  // 9. নতুন attempt number
+  // duration is in minutes
+  const startedAt = new Date();
+
+  const durationMs = assessment.duration * 60 * 1000;
+
+  const expiresAt = new Date(startedAt.getTime() + durationMs);
+
   const attemptNumber = attempts.length + 1;
 
-  // 10. নতুন attempt তৈরি
   const attempt = await prisma.assessmentAttempt.create({
     data: {
       assessmentId,
       candidateId: userId,
+      companyId: assessment.companyId,
       attemptNumber,
       status: "IN_PROGRESS",
-      startedAt: new Date(),
+      startedAt,
+      expiresAt,
     },
     include: {
       assessment: true,
@@ -175,6 +247,31 @@ const startAssessment = async (userId: string, assessmentId: string) => {
   return attempt;
 };
 
+const expireAttempts = async () => {
+  try {
+    const now = new Date();
+
+    const result = await prisma.assessmentAttempt.updateMany({
+      where: {
+        status: "IN_PROGRESS",
+        expiresAt: {
+          lte: now,
+        },
+      },
+      data: {
+        status: "EXPIRED",
+      },
+    });
+
+    if (result.count > 0) {
+      console.log(`${result.count} assessment attempt(s) expired`);
+    }
+  } catch (error) {
+    console.error("Failed to expire attempts:", error);
+  }
+};
+
+export default expireAttempts;
 export const InvitationServices = {
   getMyInvitations,
   acceptInvitation,

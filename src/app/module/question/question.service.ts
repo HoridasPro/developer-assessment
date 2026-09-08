@@ -123,7 +123,6 @@ const updateQuestion = async (
     throw new Error("Question not found");
   }
 
-  // Question update
   await prisma.question.update({
     where: {
       id: questionId,
@@ -139,7 +138,6 @@ const updateQuestion = async (
     },
   });
 
-  // Options পাঠানো হলে update হবে
   if (payload.options) {
     await prisma.questionOption.deleteMany({
       where: {
@@ -158,7 +156,6 @@ const updateQuestion = async (
     }
   }
 
-  // Updated Question + Options
   const result = await prisma.question.findUnique({
     where: {
       id: questionId,

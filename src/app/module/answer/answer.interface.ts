@@ -4,3 +4,4 @@ export interface ISubmitAnswerPayload {
   writtenAnswer?: string;
   codeAnswer?: string;
 }
+ 

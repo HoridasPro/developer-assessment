@@ -14,4 +14,3 @@ export interface ICreateQuestionPayload {
     isCorrect: boolean;
   }[];
 }
-

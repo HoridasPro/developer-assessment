@@ -11,4 +11,10 @@ router.post(
   AnswerController.saveAnswer,
 );
 
+router.patch(
+  "/evaluate-answers/:attemptId",
+  auth(Role.COMPANY),
+  AnswerController.evaluateAnswers,
+);
+
 export const AnswerRoutes = router;

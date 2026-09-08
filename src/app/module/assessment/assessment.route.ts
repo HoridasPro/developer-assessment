@@ -28,6 +28,4 @@ router.post(
   AssessmentController.inviteCandidate,
 );
 
-
-
 export const AssessmentRoutes = router;

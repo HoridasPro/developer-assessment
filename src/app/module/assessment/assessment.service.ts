@@ -15,7 +15,6 @@ const createAssessment = async (
     throw new Error("Company profile not found");
   }
 
-  // Assessment create
   const assessment = await prisma.assessment.create({
     data: {
       title: payload.title,
@@ -30,10 +29,6 @@ const createAssessment = async (
 
       companyId: company.id,
     },
-
-    // include: {
-    //   company: true,
-    // },
 
     include: {
       company: {
@@ -55,79 +50,115 @@ const createAssessment = async (
   return assessment;
 };
 
-const addQuestionToAssessment = async (
+// const addQuestionToAssessment = async (
+//   userId: string,
+//   assessmentId: string,
+//   questionId: string,
+//   order: number,
+//   marks?: number,
+// ) => {
+//   const company = await prisma.companyProfile.findUnique({
+//     where: {
+//       userId,
+//     },
+//   });
+
+//   if (!company) {
+//     throw new Error("Company profile not found");
+//   }
+
+//   const assessment = await prisma.assessment.findFirst({
+//     where: {
+//       id: assessmentId,
+//       companyId: company.id,
+//     },
+//   });
+
+//   if (!assessment) {
+//     throw new Error("Assessment not found");
+//   }
+
+//   const question = await prisma.question.findUnique({
+//     where: {
+//       id: questionId,
+//     },
+//   });
+
+//   if (!question) {
+//     throw new Error("Question not found");
+//   }
+
+//   const alreadyExists = await prisma.assessmentQuestion.findUnique({
+//     where: {
+//       assessmentId_questionId: {
+//         assessmentId,
+//         questionId,
+//       },
+//     },
+//   });
+
+//   if (alreadyExists) {
+//     throw new Error("Question already added to this assessment");
+//   }
+
+//   const assessmentQuestion = await prisma.assessmentQuestion.create({
+//     data: {
+//       assessmentId,
+//       questionId,
+//       order,
+//       marks: marks ?? question.marks,
+//     },
+//     include: {
+//       questions: {
+//         include: {
+//           options: true,
+//         },
+//       },
+//     },
+//   });
+
+//   return assessmentQuestion;
+// };
+
+const addQuestionsToAssessment = async (
   userId: string,
   assessmentId: string,
-  questionId: string,
-  order: number,
-  marks?: number,
+  questionsData: { questionId: string; order: number; marks?: number }[],
 ) => {
-  // Company খুঁজে বের করা
   const company = await prisma.companyProfile.findUnique({
-    where: {
-      userId,
-    },
+    where: { userId },
   });
 
-  if (!company) {
-    throw new Error("Company profile not found");
-  }
+  if (!company) throw new Error("Company profile not found");
 
-  // Assessment ওই company-এর কিনা check
   const assessment = await prisma.assessment.findFirst({
-    where: {
-      id: assessmentId,
-      companyId: company.id,
-    },
+    where: { id: assessmentId, companyId: company.id },
   });
 
-  if (!assessment) {
-    throw new Error("Assessment not found");
-  }
+  if (!assessment) throw new Error("Assessment not found");
 
-  // Question আছে কিনা check
-  const question = await prisma.question.findUnique({
-    where: {
-      id: questionId,
-    },
-  });
-
-  if (!question) {
-    throw new Error("Question not found");
-  }
-
-  const alreadyExists = await prisma.assessmentQuestion.findUnique({
-    where: {
-      assessmentId_questionId: {
-        assessmentId,
-        questionId,
-      },
-    },
-  });
-
-  if (alreadyExists) {
-    throw new Error("Question already added to this assessment");
-  }
-
-  // Assessment-এর সাথে Question attach
-  const assessmentQuestion = await prisma.assessmentQuestion.create({
-    data: {
-      assessmentId,
-      questionId,
-      order,
-      marks: marks ?? question.marks,
-    },
-    include: {
-      questions: {
-        include: {
-          options: true,
+  // Loop/Transaction চালিয়ে প্রতিটি প্রশ্ন সেভ করুন
+  const createdQuestions = await prisma.$transaction(
+    questionsData.map((item) =>
+      prisma.assessmentQuestion.create({
+        data: {
+          assessmentId,
+          questionId: item.questionId,
+          order: item.order,
+          // marks: item.marks,
         },
-      },
-    },
-  });
+        include: {
+          questions: {
+            include: { options: true },
+          },
+        },
+      })
+    )
+  );
 
-  return assessmentQuestion;
+  return createdQuestions;
 };
+
 
 const publishAssessment = async (userId: string, assessmentId: string) => {
   const company = await prisma.companyProfile.findUnique({
@@ -199,7 +230,6 @@ const inviteCandidate = async (
   assessmentId: string,
   candidateUserId: string,
 ) => {
-  // Company profile check
   const company = await prisma.companyProfile.findUnique({
     where: {
       userId,
@@ -210,7 +240,6 @@ const inviteCandidate = async (
     throw new Error("Company profile not found");
   }
 
-  // Assessment এই company-এর কিনা check
   const assessment = await prisma.assessment.findFirst({
     where: {
       id: assessmentId,
@@ -222,12 +251,10 @@ const inviteCandidate = async (
     throw new Error("Assessment not found");
   }
 
-  // Assessment published কিনা
   if (assessment.status !== "PUBLISHED") {
     throw new Error("Only published assessment can be sent to candidates");
   }
 
-  // Candidate User আছে কিনা এবং role CANDIDATE কিনা
   const candidate = await prisma.user.findUnique({
     where: {
       id: candidateUserId,
@@ -248,7 +275,6 @@ const inviteCandidate = async (
     throw new Error("This user is not a candidate");
   }
 
-  // আগে invite করা হয়েছে কিনা
   const existingInvitation = await prisma.assessmentInvitation.findUnique({
     where: {
       assessmentId_candidateUserId: {
@@ -262,7 +288,6 @@ const inviteCandidate = async (
     throw new Error("Candidate already invited to this assessment");
   }
 
-  // Invitation create
   const invitation = await prisma.assessmentInvitation.create({
     data: {
       assessmentId,
@@ -298,7 +323,7 @@ const inviteCandidate = async (
 
 export const AssessmentService = {
   createAssessment,
-  addQuestionToAssessment,
+  addQuestionsToAssessment,
   publishAssessment,
   inviteCandidate,
 };

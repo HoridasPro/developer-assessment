@@ -11,6 +11,12 @@ router.get(
   AttemptController.getAttemptQuestions,
 );
 
+router.patch(
+  "/cancel/:attemptId",
+  auth(Role.CANDIDATE),
+  AttemptController.cancelAttempt,
+);
+
 router.post(
   "/submit/:attemptId",
   auth(Role.CANDIDATE),
@@ -18,7 +24,7 @@ router.post(
 );
 router.post(
   "/evaluate/:attemptId",
-  auth(Role.CANDIDATE),
+  auth(Role.COMPANY),
   AttemptController.evaluateAttempt,
 );
 router.get(

@@ -63,7 +63,6 @@ const updateQuestion = catchAsync(async (req: Request, res: Response) => {
   }
 
   const { questionId } = req.params;
-  console.log("questionId get:", questionId);
 
   if (Array.isArray(questionId)) {
     throw new Error("Invalid question ID");

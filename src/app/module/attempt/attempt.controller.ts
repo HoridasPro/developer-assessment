@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AttemptServices } from "./attempt.service";
+import { prisma } from "../../lib/prisma";
 
 const getAttemptQuestions = catchAsync(async (req: Request, res: Response) => {
   const userId = req.data?.id as string;
@@ -19,6 +20,27 @@ const getAttemptQuestions = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const cancelAttempt = catchAsync(async (req: Request, res: Response) => {
+  const { attemptId } = req.params;
+
+  const candidateId = req.data?.id;
+
+  if (!candidateId) {
+    throw new Error("User not logged in");
+  }
+
+  const result = await AttemptServices.cancelAttempt(
+    attemptId as string,
+    candidateId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Assessment attempt cancelled successfully",
+    data: result,
+  });
+});
+
 const submitAttempt = catchAsync(async (req: Request, res: Response) => {
   const { attemptId } = req.params;
 
@@ -28,13 +50,11 @@ const submitAttempt = catchAsync(async (req: Request, res: Response) => {
     throw new Error("User not logged in");
   }
 
-  // Call service
   const result = await AttemptServices.submitAttempt(
     attemptId as string,
     candidateId,
   );
 
-  // Response
   sendResponse(res, {
     success: true,
     message: "Assessment submitted successfully",
@@ -45,23 +65,24 @@ const submitAttempt = catchAsync(async (req: Request, res: Response) => {
 const evaluateAttempt = catchAsync(async (req: Request, res: Response) => {
   const { attemptId } = req.params;
 
-  const candidateId = req.data?.id;
+  const companyId = req.data?.id;
 
-  if (!candidateId) {
+  if (!companyId) {
     throw new Error("User not logged in");
   }
 
   const result = await AttemptServices.evaluateAttempt(
     attemptId as string,
-    candidateId,
+    companyId,
   );
 
-  res.status(200).json({
+  sendResponse(res, {
     success: true,
     message: "Assessment evaluated successfully",
     data: result,
   });
 });
+
 const getAttemptResult = catchAsync(async (req: Request, res: Response) => {
   const { attemptId } = req.params;
 
@@ -103,6 +124,7 @@ const getAllMyAssessmentResults = catchAsync(
 
 export const AttemptController = {
   getAttemptQuestions,
+  cancelAttempt,
   submitAttempt,
   evaluateAttempt,
   getAttemptResult,
