@@ -10,6 +10,12 @@ router.post(
   auth(Role.COMPANY),
   AssessmentController.createAssessmentDB,
 );
+
+router.delete(
+  "/assessment/:assessmentId",
+  auth(Role.COMPANY),
+  AssessmentController.deleteAssessment,
+);
 router.post(
   "/questions/:assessmentId",
   auth(Role.COMPANY),

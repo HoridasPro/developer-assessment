@@ -49,76 +49,52 @@ const createAssessment = async (
 
   return assessment;
 };
+const deleteAssessment = async (
+  assessmentId: string,
+  companyUserId: string,
+) => {
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId: companyUserId,
+    },
+  });
 
-// const addQuestionToAssessment = async (
-//   userId: string,
-//   assessmentId: string,
-//   questionId: string,
-//   order: number,
-//   marks?: number,
-// ) => {
-//   const company = await prisma.companyProfile.findUnique({
-//     where: {
-//       userId,
-//     },
-//   });
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
 
-//   if (!company) {
-//     throw new Error("Company profile not found");
-//   }
+  const assessment = await prisma.assessment.findUnique({
+    where: {
+      id: assessmentId,
+    },
+  });
 
-//   const assessment = await prisma.assessment.findFirst({
-//     where: {
-//       id: assessmentId,
-//       companyId: company.id,
-//     },
-//   });
+  if (!assessment) {
+    throw new Error("Assessment not found");
+  }
 
-//   if (!assessment) {
-//     throw new Error("Assessment not found");
-//   }
+  if (assessment.companyId !== company.id) {
+    throw new Error("You are not allowed to delete this assessment");
+  }
 
-//   const question = await prisma.question.findUnique({
-//     where: {
-//       id: questionId,
-//     },
-//   });
+  if (assessment.isDeleted) {
+    throw new Error("Assessment is already deleted");
+  }
 
-//   if (!question) {
-//     throw new Error("Question not found");
-//   }
+  await prisma.assessment.update({
+    where: {
+      id: assessmentId,
+    },
+    data: {
+      isDeleted: true,
+    },
+  });
 
-//   const alreadyExists = await prisma.assessmentQuestion.findUnique({
-//     where: {
-//       assessmentId_questionId: {
-//         assessmentId,
-//         questionId,
-//       },
-//     },
-//   });
-
-//   if (alreadyExists) {
-//     throw new Error("Question already added to this assessment");
-//   }
-
-//   const assessmentQuestion = await prisma.assessmentQuestion.create({
-//     data: {
-//       assessmentId,
-//       questionId,
-//       order,
-//       marks: marks ?? question.marks,
-//     },
-//     include: {
-//       questions: {
-//         include: {
-//           options: true,
-//         },
-//       },
-//     },
-//   });
-
-//   return assessmentQuestion;
-// };
+  return {
+    assessmentId,
+    // message: "Assessment deleted successfully",
+  };
+};
 
 const addQuestionsToAssessment = async (
   userId: string,
@@ -152,13 +128,12 @@ const addQuestionsToAssessment = async (
             include: { options: true },
           },
         },
-      })
-    )
+      }),
+    ),
   );
 
   return createdQuestions;
 };
-
 
 const publishAssessment = async (userId: string, assessmentId: string) => {
   const company = await prisma.companyProfile.findUnique({
@@ -323,6 +298,7 @@ const inviteCandidate = async (
 
 export const AssessmentService = {
   createAssessment,
+  deleteAssessment,
   addQuestionsToAssessment,
   publishAssessment,
   inviteCandidate,

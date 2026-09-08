@@ -9,6 +9,7 @@ model Assessment {
   startAt       DateTime?
   endAt         DateTime?
   status        AssessmentStatus @default(DRAFT)
+  isDeleted     Boolean @default(false)
 
   companyId   String  
 

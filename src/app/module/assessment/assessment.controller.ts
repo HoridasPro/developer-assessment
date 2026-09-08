@@ -4,7 +4,6 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 
 import { AssessmentService } from "./assessment.service";
-import { prisma } from "../../lib/prisma";
 
 const createAssessmentDB = catchAsync(async (req: Request, res: Response) => {
   const userId = req.data?.id;
@@ -20,37 +19,26 @@ const createAssessmentDB = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const deleteAssessment = catchAsync(async (req: Request, res: Response) => {
+  const { assessmentId } = req.params;
 
-// const addQuestionToAssessmentDB = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.data?.id;
+  const companyUserId = req.data?.id;
 
-//     if (!userId) {
-//       throw new Error("User not authenticated");
-//     }
+  if (!companyUserId) {
+    throw new Error("User not logged in");
+  }
 
-//     const { assessmentId } = req.params;
-//     if (Array.isArray(assessmentId)) {
-//       throw new Error("Invalid assessment ID");
-//     }
+  const result = await AssessmentService.deleteAssessment(
+    assessmentId as string,
+    companyUserId,
+  );
 
-//     const { questionId, order, marks } = req.body;
-
-//     const result = await AssessmentService.addQuestionToAssessment(
-//       userId,
-//       assessmentId,
-//       questionId,
-//       order,
-//       marks,
-//     );
-
-//     sendResponse(res, {
-//       success: true,
-//       message: "Question added to assessment successfully",
-//       data: result,
-//     });
-//   },
-// );
+  sendResponse(res, {
+    success: true,
+    message: "Assessment deleted successfully",
+    data: result,
+  });
+});
 
 const addQuestionToAssessmentDB = catchAsync(
   async (req: Request, res: Response) => {
@@ -127,6 +115,7 @@ const inviteCandidate = catchAsync(async (req: Request, res: Response) => {
 
 export const AssessmentController = {
   createAssessmentDB,
+  deleteAssessment,
   addQuestionToAssessmentDB,
   publishAssessment,
   inviteCandidate,
