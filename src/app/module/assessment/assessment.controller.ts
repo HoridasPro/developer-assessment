@@ -161,25 +161,25 @@ const getAllAssessments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const getAssessmentById = catchAsync(async (req: Request, res: Response) => {
-//   const { assessmentId } = req.params;
-//   const companyUserId = req.data?.id;
+const getAssessmentById = catchAsync(async (req: Request, res: Response) => {
+  const { assessmentId } = req.params;
+  const companyUserId = req.data?.id;
 
-//   if (!companyUserId) {
-//     throw new Error("User not logged in");
-//   }
+  if (!companyUserId) {
+    throw new Error("User not logged in");
+  }
 
-//   const result = await AssessmentService.getAssessmentById(
-//     assessmentId as string,
-//     companyUserId,
-//   );
+  const result = await AssessmentService.getAssessmentById(
+    assessmentId as string,
+    companyUserId,
+  );
 
-//   sendResponse(res, {
-//     success: true,
-//     message: "Assessment fetched successfully",
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    success: true,
+    message: "Assessment fetched successfully",
+    data: result,
+  });
+});
 
 export const AssessmentController = {
   createAssessmentDB,
@@ -189,5 +189,5 @@ export const AssessmentController = {
   inviteCandidate,
   searchAssessments,
   getAllAssessments,
-  // getAssessmentById,
+  getAssessmentById,
 };

@@ -391,41 +391,41 @@ const getAllAssessments = async (
   };
 };
 
-// const getAssessmentById = async (
-//   assessmentId: string,
-//   companyUserId: string,
-// ) => {
-//   const company = await prisma.companyProfile.findUnique({
-//     where: {
-//       userId: companyUserId,
-//     },
-//   });
+const getAssessmentById = async (
+  assessmentId: string,
+  companyUserId: string,
+) => {
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId: companyUserId,
+    },
+  });
 
-//   if (!company) {
-//     throw new Error("Company profile not found");
-//   }
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
 
-//   const assessment = await prisma.assessment.findFirst({
-//     where: {
-//       id: assessmentId,
-//       companyId: company.id,
-//       isDeleted: false,
-//     },
-//     include: {
-//       questions: {
-//         include: {
-//           questions: true,
-//         },
-//       },
-//     },
-//   });
+  const assessment = await prisma.assessment.findFirst({
+    where: {
+      id: assessmentId,
+      companyId: company.id,
+      isDeleted: false,
+    },
+    include: {
+      questions: {
+        include: {
+          questions: true,
+        },
+      },
+    },
+  });
 
-//   if (!assessment) {
-//     throw new Error("Assessment not found");
-//   }
+  if (!assessment) {
+    throw new Error("Assessment not found");
+  }
 
-//   return assessment;
-// };
+  return assessment;
+};
 
 export const AssessmentService = {
   createAssessment,
@@ -435,5 +435,5 @@ export const AssessmentService = {
   inviteCandidate,
   searchAssessments,
   getAllAssessments,
-  // getAssessmentById,
+  getAssessmentById,
 };

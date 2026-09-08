@@ -46,10 +46,10 @@ router.get(
   AssessmentController.getAllAssessments,
 );
 
-// router.get(
-//   "/assessments/:assessmentId",
-//   auth(Role.COMPANY),
-//   AssessmentController.getAssessmentById,
-// );
+router.get(
+  "/assessments/:assessmentId",
+  auth(Role.COMPANY),
+  AssessmentController.getAssessmentById,
+);
 
 export const AssessmentRoutes = router;
