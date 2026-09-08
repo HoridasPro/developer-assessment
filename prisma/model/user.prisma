@@ -10,6 +10,7 @@ model User {
   companyProfile   CompanyProfile?
   invitaions   AssessmentInvitation[]
   attempt      AssessmentAttempt[]
+  auditLogs    AuditLog[]
   status            ActiveStatus          @default(ACTIVE)
   isActive          Boolean               @default(true)
   createdAt         DateTime              @default(now())

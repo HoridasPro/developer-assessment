@@ -1,0 +1,15 @@
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  performedBy String
+  targetUser  String?
+  oldValue    String?
+  newValue    String?
+  createdAt   DateTime @default(now())
+
+  admin       User     @relation(fields: [performedBy], references: [id])
+
+  @@index([performedBy])
+  @@index([targetUser])
+  @@index([createdAt])
+}

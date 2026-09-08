@@ -13,6 +13,7 @@ const getAllUsers = async () => {
 const updateUserRole = async (
   userId: string,
   role: "ADMIN" | "CANDIDATE" | "COMPANY",
+  adminId: string,
 ) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -22,6 +23,11 @@ const updateUserRole = async (
 
   if (!user) {
     throw new Error("User not found");
+  }
+
+  const oldRole = user.role;
+  if (oldRole === role) {
+    throw new Error("User already has this role");
   }
 
   const updatedUser = await prisma.user.update({
@@ -36,6 +42,16 @@ const updateUserRole = async (
       name: true,
       email: true,
       role: true,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      action: "ROLE_UPDATED",
+      performedBy: adminId,
+      targetUser: userId,
+      oldValue: oldRole,
+      newValue: role,
     },
   });
 
@@ -169,8 +185,29 @@ const getDashboardStats = async () => {
   };
 };
 
+const getAuditLogs = async () => {
+  const logs = await prisma.auditLog.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      admin: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+  });
+
+  return logs;
+};
+
 export const AdminServices = {
   getAllUsers,
   updateUserRole,
   getDashboardStats,
+  getAuditLogs,
 };

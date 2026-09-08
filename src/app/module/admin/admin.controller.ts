@@ -17,9 +17,15 @@ const updateUserRole = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { role } = req.body;
 
-  const result = await AdminServices.updateUserRole(id as string, role);
+  const adminId = req.data?.id;
 
-  res.status(200).json({
+  const result = await AdminServices.updateUserRole(
+    id as string,
+    role,
+    adminId as string,
+  );
+
+  sendResponse(res, {
     success: true,
     message: "User role updated successfully",
     data: result,
@@ -36,9 +42,19 @@ const getDashboardStats = async (req: Request, res: Response) => {
   });
 };
 
+const getAuditLogs = async (req: Request, res: Response) => {
+  const result = await AdminServices.getAuditLogs();
+
+  sendResponse(res, {
+    success: true,
+    message: "Audit logs fetched successfully",
+    data: result,
+  });
+};
 
 export const AdminController = {
   getAllUsers,
   updateUserRole,
   getDashboardStats,
+  getAuditLogs,
 };
