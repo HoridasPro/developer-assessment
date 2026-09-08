@@ -59,6 +59,10 @@ const userLogin = async (payload: IUserLoginPayload) => {
     where: { email },
   });
 
+  if (user.status === "SUSPENDED") {
+    throw new Error("Your account has been suspended");
+  }
+
   const isPasswordMatched = await bcrypt.compare(password, user.password);
   if (!isPasswordMatched) {
     throw new Error("Password is not matched");

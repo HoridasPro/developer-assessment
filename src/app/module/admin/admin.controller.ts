@@ -52,9 +52,25 @@ const getAuditLogs = async (req: Request, res: Response) => {
   });
 };
 
+const suspendUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const adminId = req.data?.id as string;
+  console.log("ADMIN ID:", adminId);
+
+  const result = await AdminServices.suspendUser(id as string, adminId);
+
+  sendResponse(res, {
+    success: true,
+    message: "User suspended successfully",
+    data: result,
+  });
+};
+
 export const AdminController = {
   getAllUsers,
   updateUserRole,
   getDashboardStats,
   getAuditLogs,
+  suspendUser,
 };

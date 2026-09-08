@@ -18,4 +18,10 @@ router.get(
 );
 router.get("/audit-logs", auth(Role.ADMIN), AdminController.getAuditLogs);
 
+router.patch(
+  "/users/:id/suspend",
+  auth(Role.ADMIN),
+  AdminController.suspendUser,
+);
+
 export const AdminRoutes = router;

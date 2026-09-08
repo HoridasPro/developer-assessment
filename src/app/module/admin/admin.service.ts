@@ -205,9 +205,53 @@ const getAuditLogs = async () => {
   return logs;
 };
 
+const suspendUser = async (userId: string, adminId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.status === "SUSPENDED") {
+    throw new Error("User is already suspended");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      status: "SUSPENDED",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      action: "USER_SUSPENDED",
+      performedBy: adminId,
+      targetUser: userId,
+      oldValue: user.status,
+      newValue: "SUSPENDED",
+    },
+  });
+
+  return updatedUser;
+};
 export const AdminServices = {
   getAllUsers,
   updateUserRole,
   getDashboardStats,
   getAuditLogs,
+  suspendUser,
 };
