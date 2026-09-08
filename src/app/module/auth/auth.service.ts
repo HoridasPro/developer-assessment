@@ -19,7 +19,7 @@ const registerUser = async (payload: IUserRegisterPayload) => {
   });
 
   if (role !== Role.CANDIDATE && role !== Role.COMPANY) {
-    throw new Error("Only candidate can register");
+    throw new Error("Only candidate and company can register");
   }
 
   if (isUserExists) {

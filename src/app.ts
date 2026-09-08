@@ -15,6 +15,7 @@ import { QuestionRoutes } from "./app/module/question/question.route";
 import { InvitationRoutes } from "./app/module/invitation/invitation.route";
 import { AttemptRoutes } from "./app/module/attempt/attempt.route";
 import { AnswerRoutes } from "./app/module/answer/answer.route";
+import { AdminRoutes } from "./app/module/admin/admin.route";
 
 const app: Application = express();
 
@@ -36,6 +37,7 @@ app.use("/api/v1/questions", QuestionRoutes);
 app.use("/api/v1/invitations", InvitationRoutes);
 app.use("/api/v1/attempts", AttemptRoutes);
 app.use("/api/v1/attempts", AnswerRoutes);
+app.use("/api/v1/admin", AdminRoutes);
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("Welcome developer assessment & coding platform");

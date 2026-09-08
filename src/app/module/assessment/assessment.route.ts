@@ -40,4 +40,16 @@ router.get(
   AssessmentController.searchAssessments,
 );
 
+router.get(
+  "/assessments",
+  auth(Role.COMPANY),
+  AssessmentController.getAllAssessments,
+);
+
+// router.get(
+//   "/assessments/:assessmentId",
+//   auth(Role.COMPANY),
+//   AssessmentController.getAssessmentById,
+// );
+
 export const AssessmentRoutes = router;

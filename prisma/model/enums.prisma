@@ -38,6 +38,7 @@ enum InvitationStatus {
   ACCEPTED
   DECLINED
   EXPIRED
+  CANCELLED
 }
 
 enum AttemptStatus {

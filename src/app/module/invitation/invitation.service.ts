@@ -27,6 +27,38 @@ const getMyInvitations = async (userId: string) => {
 
   return invitations;
 };
+const cancelInvitation = async (invitationId: string, userId: string) => {
+  const invitation = await prisma.assessmentInvitation.findUnique({
+    where: {
+      id: invitationId,
+    },
+  });
+
+  if (!invitation) {
+    throw new Error("Invitation not found");
+  }
+
+  // এই invitation এই candidate-এর কিনা
+  if (invitation.candidateUserId !== userId) {
+    throw new Error("You are not allowed to cancel this invitation");
+  }
+
+  // শুধু PENDING invitation cancel করা যাবে
+  if (invitation.status !== "PENDING") {
+    throw new Error("Only pending invitations can be cancelled");
+  }
+
+  const result = await prisma.assessmentInvitation.update({
+    where: {
+      id: invitationId,
+    },
+    data: {
+      status: "CANCELLED",
+    },
+  });
+
+  return result;
+};
 
 const acceptInvitation = async (userId: string, invitationId: string) => {
   const invitation = await prisma.assessmentInvitation.findUnique({
@@ -274,6 +306,7 @@ const expireAttempts = async () => {
 export default expireAttempts;
 export const InvitationServices = {
   getMyInvitations,
+  cancelInvitation,
   acceptInvitation,
   startAssessment,
 };

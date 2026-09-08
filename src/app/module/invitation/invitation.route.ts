@@ -11,6 +11,12 @@ router.get(
   InvitationController.getMyInvitations,
 );
 
+router.post(
+  "/:invitationId",
+  auth(Role.CANDIDATE),
+  InvitationController.cancelInvitation,
+);
+
 router.patch(
   "/status/:invitationId",
   auth(Role.CANDIDATE),

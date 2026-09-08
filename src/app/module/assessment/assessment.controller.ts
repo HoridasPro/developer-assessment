@@ -134,6 +134,53 @@ const searchAssessments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllAssessments = catchAsync(async (req: Request, res: Response) => {
+  const companyUserId = req.data?.id;
+
+  if (!companyUserId) {
+    throw new Error("User not logged in");
+  }
+
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  const status =
+    typeof req.query.status === "string" ? req.query.status : undefined;
+
+  const result = await AssessmentService.getAllAssessments(
+    companyUserId,
+    page,
+    limit,
+    status,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Assessments fetched successfully",
+    data: result,
+  });
+});
+
+// const getAssessmentById = catchAsync(async (req: Request, res: Response) => {
+//   const { assessmentId } = req.params;
+//   const companyUserId = req.data?.id;
+
+//   if (!companyUserId) {
+//     throw new Error("User not logged in");
+//   }
+
+//   const result = await AssessmentService.getAssessmentById(
+//     assessmentId as string,
+//     companyUserId,
+//   );
+
+//   sendResponse(res, {
+//     success: true,
+//     message: "Assessment fetched successfully",
+//     data: result,
+//   });
+// });
+
 export const AssessmentController = {
   createAssessmentDB,
   deleteAssessment,
@@ -141,4 +188,6 @@ export const AssessmentController = {
   publishAssessment,
   inviteCandidate,
   searchAssessments,
+  getAllAssessments,
+  // getAssessmentById,
 };

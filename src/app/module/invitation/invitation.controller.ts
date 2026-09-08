@@ -15,6 +15,29 @@ const getMyInvitations = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const cancelInvitation = catchAsync(
+  async (req: Request, res: Response) => {
+    const { invitationId } = req.params;
+    const userId = req.data?.id;
+
+    if (!userId) {
+      throw new Error("User not logged in");
+    }
+
+    const result =
+      await InvitationServices.cancelInvitation(
+        invitationId as string,
+        userId,
+      );
+
+    sendResponse(res, {
+      success: true,
+      message: "Invitation cancelled successfully",
+      data: result,
+    });
+  },
+);
+
 const acceptInvitation = catchAsync(async (req: Request, res: Response) => {
   const userId = req.data?.id as string;
 
@@ -50,6 +73,7 @@ const startAssessment = catchAsync(async (req: Request, res: Response) => {
 
 export const InvitationController = {
   getMyInvitations,
+  cancelInvitation,
   acceptInvitation,
   startAssessment,
 };

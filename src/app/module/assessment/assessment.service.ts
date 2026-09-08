@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 import { prisma } from "../../lib/prisma";
 import { ICreateAssessmentPayload } from "./assessment.interface";
 
@@ -296,10 +297,7 @@ const inviteCandidate = async (
   return invitation;
 };
 
-const searchAssessments = async (
-  companyUserId: string,
-  keyword: string,
-) => {
+const searchAssessments = async (companyUserId: string, keyword: string) => {
   const company = await prisma.companyProfile.findUnique({
     where: {
       userId: companyUserId,
@@ -337,11 +335,105 @@ const searchAssessments = async (
   return assessments;
 };
 
+const getAllAssessments = async (
+  companyUserId: string,
+  page: number = 1,
+  limit: number = 10,
+  status?: string,
+) => {
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId: companyUserId,
+    },
+  });
+
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
+
+  const skip = (page - 1) * limit;
+
+  const where: any = {
+    companyId: company.id,
+    isDeleted: false,
+  };
+
+  // status filter
+  if (status) {
+    where.status = status;
+  }
+
+  const [assessments, total] = await Promise.all([
+    prisma.assessment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    prisma.assessment.count({
+      where,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    data: assessments,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
+};
+
+// const getAssessmentById = async (
+//   assessmentId: string,
+//   companyUserId: string,
+// ) => {
+//   const company = await prisma.companyProfile.findUnique({
+//     where: {
+//       userId: companyUserId,
+//     },
+//   });
+
+//   if (!company) {
+//     throw new Error("Company profile not found");
+//   }
+
+//   const assessment = await prisma.assessment.findFirst({
+//     where: {
+//       id: assessmentId,
+//       companyId: company.id,
+//       isDeleted: false,
+//     },
+//     include: {
+//       questions: {
+//         include: {
+//           questions: true,
+//         },
+//       },
+//     },
+//   });
+
+//   if (!assessment) {
+//     throw new Error("Assessment not found");
+//   }
+
+//   return assessment;
+// };
+
 export const AssessmentService = {
   createAssessment,
   deleteAssessment,
   addQuestionsToAssessment,
   publishAssessment,
   inviteCandidate,
-  searchAssessments
+  searchAssessments,
+  getAllAssessments,
+  // getAssessmentById,
 };
