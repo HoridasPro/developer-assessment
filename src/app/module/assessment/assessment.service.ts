@@ -296,10 +296,52 @@ const inviteCandidate = async (
   return invitation;
 };
 
+const searchAssessments = async (
+  companyUserId: string,
+  keyword: string,
+) => {
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId: companyUserId,
+    },
+  });
+
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
+
+  const assessments = await prisma.assessment.findMany({
+    where: {
+      companyId: company.id,
+      isDeleted: false,
+      OR: [
+        {
+          title: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+        },
+      ],
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return assessments;
+};
+
 export const AssessmentService = {
   createAssessment,
   deleteAssessment,
   addQuestionsToAssessment,
   publishAssessment,
   inviteCandidate,
+  searchAssessments
 };

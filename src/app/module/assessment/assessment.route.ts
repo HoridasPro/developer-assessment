@@ -34,4 +34,10 @@ router.post(
   AssessmentController.inviteCandidate,
 );
 
+router.get(
+  "/search/assessments",
+  auth(Role.COMPANY),
+  AssessmentController.searchAssessments,
+);
+
 export const AssessmentRoutes = router;

@@ -113,10 +113,32 @@ const inviteCandidate = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const searchAssessments = catchAsync(async (req: Request, res: Response) => {
+  const companyUserId = req.data?.id;
+  const { q } = req.query;
+
+  if (!companyUserId) {
+    throw new Error("User not logged in");
+  }
+
+  if (!q || typeof q !== "string") {
+    throw new Error("Search keyword is required");
+  }
+
+  const result = await AssessmentService.searchAssessments(companyUserId, q);
+
+  sendResponse(res, {
+    success: true,
+    message: "Assessments searched successfully",
+    data: result,
+  });
+});
+
 export const AssessmentController = {
   createAssessmentDB,
   deleteAssessment,
   addQuestionToAssessmentDB,
   publishAssessment,
   inviteCandidate,
+  searchAssessments,
 };
