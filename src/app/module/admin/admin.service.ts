@@ -42,138 +42,135 @@ const updateUserRole = async (
   return updatedUser;
 };
 
-// const getDashboardStats = async () => {
-//   // =========================
-//   // USER STATISTICS
-//   // =========================
+const getDashboardStats = async () => {
+  // =========================
+  // USER STATISTICS
+  // =========================
 
-//   const totalUsers = await prisma.user.count();
+  const totalUsers = await prisma.user.count();
 
-//   const totalCandidates = await prisma.user.count({
-//     where: {
-//       role: "CANDIDATE",
-//     },
-//   });
+  const totalCandidates = await prisma.user.count({
+    where: {
+      role: "CANDIDATE",
+    },
+  });
 
-//   const totalCompanies = await prisma.user.count({
-//     where: {
-//       role: "COMPANY",
-//     },
-//   });
+  const totalCompanies = await prisma.user.count({
+    where: {
+      role: "COMPANY",
+    },
+  });
 
-//   const totalAdmins = await prisma.user.count({
-//     where: {
-//       role: "ADMIN",
-//     },
-//   });
+  const totalAdmins = await prisma.user.count({
+    where: {
+      role: "ADMIN",
+    },
+  });
 
-//   // =========================
-//   // ASSESSMENT STATISTICS
-//   // =========================
+  // =========================
+  // ASSESSMENT STATISTICS
+  // =========================
 
-//   const totalAssessments = await prisma.assessment.count();
+  const totalAssessments = await prisma.assessment.count();
 
-//   const publishedAssessments = await prisma.assessment.count({
-//     where: {
-//       // তোমার schema অনুযায়ী field/status adjust করবে
-//       status: "PUBLISHED",
-//     },
-//   });
+  const publishedAssessments = await prisma.assessment.count({
+    where: {
+      // তোমার schema অনুযায়ী field/status adjust করবে
+      status: "PUBLISHED",
+    },
+  });
 
-//   const draftAssessments = await prisma.assessment.count({
-//     where: {
-//       status: "DRAFT",
-//     },
-//   });
+  const draftAssessments = await prisma.assessment.count({
+    where: {
+      status: "DRAFT",
+    },
+  });
 
-//   // =========================
-//   // ATTEMPT STATISTICS
-//   // =========================
+  // =========================
+  // ATTEMPT STATISTICS
+  // =========================
 
-//   const totalAttempts = await prisma.assessmentAttempt.count();
+  const totalAttempts = await prisma.assessmentAttempt.count();
 
-//   const completedAttempts = await prisma.assessmentAttempt.count({
-//     where: {
-//       status: "COMPLETED",
-//     },
-//   });
+  const completedAttempts = await prisma.assessmentAttempt.count({
+    where: {
+      status: "COMPLETED",
+    },
+  });
 
-//   const inProgressAttempts = await prisma.assessmentAttempt.count({
-//     where: {
-//       status: "IN_PROGRESS",
-//     },
-//   });
+  const inProgressAttempts = await prisma.assessmentAttempt.count({
+    where: {
+      status: "IN_PROGRESS",
+    },
+  });
 
-//   const expiredAttempts = await prisma.assessmentAttempt.count({
-//     where: {
-//       status: "EXPIRED",
-//     },
-//   });
+  const expiredAttempts = await prisma.assessmentAttempt.count({
+    where: {
+      status: "EXPIRED",
+    },
+  });
 
-//   // =========================
-//   // RESULT STATISTICS
-//   // =========================
+  // =========================
+  // RESULT STATISTICS
+  // =========================
 
-//   const evaluatedAttempts = await prisma.assessmentAttempt.count({
-//     where: {
-//       status: "COMPLETED",
-//     },
-//   });
+  const evaluatedAttempts = await prisma.assessmentAttempt.count({
+    where: {
+      status: "COMPLETED",
+    },
+  });
 
-//   // যদি তোমার result/score field থাকে,
-//   // তাহলে passed/failed সেখান থেকে calculate করবে।
-//   const passedCandidates = await prisma.assessmentAttempt.count({
-//     where: {
-//       status: "COMPLETED",
-//       result: {
-//         passed: true,
-//       },
-//     },
-//   });
+  // যদি তোমার result/score field থাকে,
+  // তাহলে passed/failed সেখান থেকে calculate করবে।
+  const passedCandidates = await prisma.assessmentAttempt.count({
+    where: {
+      status: "COMPLETED",
+      passed: true,
+    },
+  });
 
-//   const failedCandidates = await prisma.assessmentAttempt.count({
-//     where: {
-//       status: "COMPLETED",
-//       result: {
-//         passed: false,
-//       },
-//     },
-//   });
+  const failedCandidates = await prisma.assessmentAttempt.count({
+    where: {
+      status: "COMPLETED",
+      passed: false,
+    },
+  });
 
-//   // =========================
-//   // FINAL RESPONSE
-//   // =========================
+  // =========================
+  // FINAL RESPONSE
+  // =========================
 
-//   return {
-//     users: {
-//       total: totalUsers,
-//       candidates: totalCandidates,
-//       companies: totalCompanies,
-//       admins: totalAdmins,
-//     },
+  return {
+    users: {
+      total: totalUsers,
+      candidates: totalCandidates,
+      companies: totalCompanies,
+      admins: totalAdmins,
+    },
 
-//     assessments: {
-//       total: totalAssessments,
-//       published: publishedAssessments,
-//       draft: draftAssessments,
-//     },
+    assessments: {
+      total: totalAssessments,
+      published: publishedAssessments,
+      draft: draftAssessments,
+    },
 
-//     attempts: {
-//       total: totalAttempts,
-//       completed: completedAttempts,
-//       inProgress: inProgressAttempts,
-//       expired: expiredAttempts,
-//     },
+    attempts: {
+      total: totalAttempts,
+      completed: completedAttempts,
+      inProgress: inProgressAttempts,
+      expired: expiredAttempts,
+    },
 
-//     results: {
-//       evaluated: evaluatedAttempts,
-//       passed: passedCandidates,
-//       failed: failedCandidates,
-//     },
-//   };
-// };
+    results: {
+      evaluated: evaluatedAttempts,
+      passed: passedCandidates,
+      failed: failedCandidates,
+    },
+  };
+};
+
 export const AdminServices = {
   getAllUsers,
   updateUserRole,
-  // getDashboardStats
+  getDashboardStats,
 };

@@ -26,19 +26,19 @@ const updateUserRole = async (req: Request, res: Response) => {
   });
 };
 
-// const getDashboardStats = async (req: Request, res: Response) => {
-//   const result = await AdminServices.getDashboardStats();
+const getDashboardStats = async (req: Request, res: Response) => {
+  const result = await AdminServices.getDashboardStats();
 
-//   sendResponse(res, {
-//     success: true,
-//     message: "Dashboard stats fetched successfully",
-//     data: result,
-//   });
-// };
+  sendResponse(res, {
+    success: true,
+    message: "Dashboard stats fetched successfully",
+    data: result,
+  });
+};
 
 
 export const AdminController = {
   getAllUsers,
   updateUserRole,
-  // getDashboardStats,
+  getDashboardStats,
 };
