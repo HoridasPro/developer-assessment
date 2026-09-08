@@ -1,14 +1,14 @@
-// import { prisma } from "../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 
-// const getAllUsers = async () => {
-//   const users = await prisma.user.findMany({
-//     orderBy: {
-//       createdAt: "desc",
-//     },
-//   });
+const getAllUsers = async () => {
+  const users = await prisma.user.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-//   return users;
-// };
+  return users;
+};
 
 // const updateUserRole = async (
 //   userId: string,
@@ -172,8 +172,8 @@
 //     },
 //   };
 // };
-// export const AdminServices = {
-//   getAllUsers,
-//   updateUserRole,
-//   getDashboardStats
-// };
+export const AdminServices = {
+  getAllUsers,
+  // updateUserRole,
+  // getDashboardStats
+};
