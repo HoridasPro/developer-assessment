@@ -10,37 +10,37 @@ const getAllUsers = async () => {
   return users;
 };
 
-// const updateUserRole = async (
-//   userId: string,
-//   role: "ADMIN" | "CANDIDATE" | "COMPANY",
-// ) => {
-//   const user = await prisma.user.findUnique({
-//     where: {
-//       id: userId,
-//     },
-//   });
+const updateUserRole = async (
+  userId: string,
+  role: "ADMIN" | "CANDIDATE" | "COMPANY",
+) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
 
-//   if (!user) {
-//     throw new Error("User not found");
-//   }
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-//   const updatedUser = await prisma.user.update({
-//     where: {
-//       id: userId,
-//     },
-//     data: {
-//       role,
-//     },
-//     select: {
-//       id: true,
-//       name: true,
-//       email: true,
-//       role: true,
-//     },
-//   });
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      role,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  });
 
-//   return updatedUser;
-// };
+  return updatedUser;
+};
 
 // const getDashboardStats = async () => {
 //   // =========================
@@ -174,6 +174,6 @@ const getAllUsers = async () => {
 // };
 export const AdminServices = {
   getAllUsers,
-  // updateUserRole,
+  updateUserRole,
   // getDashboardStats
 };

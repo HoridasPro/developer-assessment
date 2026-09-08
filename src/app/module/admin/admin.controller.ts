@@ -13,18 +13,18 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const updateUserRole = async (req: Request, res: Response) => {
-//   const { id } = req.params;
-//   const { role } = req.body;
+const updateUserRole = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { role } = req.body;
 
-//   const result = await AdminServices.updateUserRole(id as string, role);
+  const result = await AdminServices.updateUserRole(id as string, role);
 
-//   res.status(200).json({
-//     success: true,
-//     message: "User role updated successfully",
-//     data: result,
-//   });
-// };
+  res.status(200).json({
+    success: true,
+    message: "User role updated successfully",
+    data: result,
+  });
+};
 
 // const getDashboardStats = async (req: Request, res: Response) => {
 //   const result = await AdminServices.getDashboardStats();
@@ -36,8 +36,9 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
 //   });
 // };
 
+
 export const AdminController = {
   getAllUsers,
-  // updateUserRole,
+  updateUserRole,
   // getDashboardStats,
 };
