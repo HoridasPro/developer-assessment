@@ -4,6 +4,7 @@ export interface ICreateAssessmentPayload {
   duration: number;
   passingScore: number;
   maxAttempts?: number;
+  price: number;
   startAt?: string;
   endAt?: string;
 }

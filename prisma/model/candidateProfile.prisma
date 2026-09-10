@@ -1,21 +1,20 @@
 model CandidateProfile {
-  id           String     @id @default(uuid())
+  id           String   @id @default(uuid())
   bio          String?
   phone        String?
   location     String?
-  skills       String[]    @default([])
+  skills       String[] @default([])
   experience   Int?
   education    String?
   resumeUrl    String?
   portfolioUrl String?
   githubUrl    String?
   linkedinUrl  String?
-  userId       String     @unique
-  user         User       @relation(fields: [userId],references: [id],onDelete: Cascade)
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
   @@map("candidateProfiles")
 }

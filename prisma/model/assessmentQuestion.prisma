@@ -1,17 +1,16 @@
 model AssessmentQuestion {
-  id           String @id @default(uuid())
+  id String @id @default(uuid())
 
   assessmentId String
   questionId   String
-  options     QuestionOption[]
-   
+  options      QuestionOption[]
 
-  assessments   Assessment @relation(fields: [assessmentId],references: [id],onDelete:Cascade)
+  assessments Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
-  questions     Question @relation(fields: [questionId],references: [id], onDelete: Cascade)
+  questions Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  marks        Float?
-  order        Int
+  marks Float?
+  order Int
 
   @@unique([assessmentId, questionId])
   @@map("assessmentQuestions")

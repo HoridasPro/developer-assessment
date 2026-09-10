@@ -7,7 +7,7 @@ model AuditLog {
   newValue    String?
   createdAt   DateTime @default(now())
 
-  admin       User     @relation(fields: [performedBy], references: [id])
+  admin User @relation(fields: [performedBy], references: [id])
 
   @@index([performedBy])
   @@index([targetUser])

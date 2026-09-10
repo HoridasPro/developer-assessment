@@ -83,7 +83,6 @@ const userLogin = async (payload: IUserLoginPayload) => {
     id: user.id,
     email: user.email,
     role: user.role,
-    // AccountStatus: user.accountStatus,
   };
   // accesstoken
   const accessToken = jwtUtils.createToken(jwtPayload, jwt_access_secret, {

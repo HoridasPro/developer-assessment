@@ -53,11 +53,10 @@ const addQuestionToAssessmentDB = catchAsync(
       throw new Error("Invalid assessment ID");
     }
 
-    // req.body থেকে options Array নেওয়া হচ্ছে
     const { options } = req.body;
 
     if (!options || !Array.isArray(options) || options.length === 0) {
-      throw new Error("Please provide an array of questions in 'options'");
+      throw new Error("Please provide an array of questions in options");
     }
 
     const result = await AssessmentService.addQuestionsToAssessment(

@@ -8,8 +8,8 @@ model AssessmentAnswer {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  obtainedMarks    Float?
-  evaluated        Boolean @default(false)
+  obtainedMarks Float?
+  evaluated     Boolean @default(false)
 
   attempt        AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question       Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)

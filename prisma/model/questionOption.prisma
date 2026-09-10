@@ -1,13 +1,13 @@
 model QuestionOption {
-  id         String   @id @default(uuid())
-  text       String
-  isCorrect  Boolean  @default(false)
+  id        String  @id @default(uuid())
+  text      String
+  isCorrect Boolean @default(false)
 
-  assessments AssessmentQuestion[]
+  assessments     AssessmentQuestion[]
   selectedAnswers AssessmentAnswer[]
 
   questionId String
-  question   Question @relation(fields: [questionId],references: [id],onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@map("questionOptions")
 }

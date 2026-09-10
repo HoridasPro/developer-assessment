@@ -28,7 +28,9 @@
     "http-status": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.6.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "stripe": "^22.6.1",
+    "zod": "^4.6.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.11",

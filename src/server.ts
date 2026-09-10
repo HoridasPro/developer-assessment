@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noUnusedVariables: <explanation> */
 import app from "./app";
 import config from "./app/config";
 import { prisma } from "./app/lib/prisma";

@@ -1,0 +1,20 @@
+model Payment {
+  id            String        @id @default(uuid())
+  assessmentId  String
+  companyId     String
+
+  amount        Float
+  currency      String        @default("usd")
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessment Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  company    CompanyProfile @relation(fields: [companyId], references: [id])
+
+  @@index([assessmentId])
+  @@index([companyId])
+  @@index([status])
+}

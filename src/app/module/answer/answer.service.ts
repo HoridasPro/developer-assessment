@@ -148,7 +148,6 @@ const evaluateAnswers = async (
   attemptId: string,
   answers: { questionId: string; marks: number }[],
 ) => {
-  // Attempt আছে কিনা check
   const attempt = await prisma.assessmentAttempt.findUnique({
     where: {
       id: attemptId,
@@ -160,7 +159,6 @@ const evaluateAnswers = async (
   }
 
   for (const item of answers) {
-    // এই attempt-এর এই question-এর answer বের করি
     const answer = await prisma.assessmentAnswer.findFirst({
       where: {
         attemptId,
@@ -175,7 +173,6 @@ const evaluateAnswers = async (
       throw new Error(`Answer not found for question: ${item.questionId}`);
     }
 
-    // শুধু Written এবং Coding manually evaluate হবে
     if (
       answer.question.type !== "WRITTEN" &&
       answer.question.type !== "CODING"
@@ -185,19 +182,16 @@ const evaluateAnswers = async (
       );
     }
 
-    // Marks negative কিনা check
     if (item.marks < 0) {
       throw new Error("Marks cannot be negative");
     }
 
-    // Maximum marks-এর বেশি কিনা check
     if (item.marks > answer.question.marks) {
       throw new Error(
         `Marks cannot be greater than ${answer.question.marks} for this question`,
       );
     }
 
-    // Marks save
     await prisma.assessmentAnswer.update({
       where: {
         id: answer.id,

@@ -38,12 +38,10 @@ const cancelInvitation = async (invitationId: string, userId: string) => {
     throw new Error("Invitation not found");
   }
 
-  // এই invitation এই candidate-এর কিনা
   if (invitation.candidateUserId !== userId) {
     throw new Error("You are not allowed to cancel this invitation");
   }
 
-  // শুধু PENDING invitation cancel করা যাবে
   if (invitation.status !== "PENDING") {
     throw new Error("Only pending invitations can be cancelled");
   }
@@ -115,83 +113,6 @@ const acceptInvitation = async (userId: string, invitationId: string) => {
 
   return updatedInvitation;
 };
-
-// const startAssessment = async (userId: string, assessmentId: string) => {
-//   const assessment = await prisma.assessment.findUnique({
-//     where: {
-//       id: assessmentId,
-//     },
-//   });
-
-//   if (!assessment) {
-//     throw new Error("Assessment not found");
-//   }
-
-//   if (assessment.status !== "PUBLISHED") {
-//     throw new Error("Assessment is not published");
-//   }
-
-//   const now = new Date();
-
-//   if (assessment.startAt && now < assessment.startAt) {
-//     throw new Error("Assessment has not started yet");
-//   }
-
-//   if (assessment.endAt && now > assessment.endAt) {
-//     throw new Error("Assessment deadline has passed");
-//   }
-
-//   const invitation = await prisma.assessmentInvitation.findFirst({
-//     where: {
-//       assessmentId: assessmentId,
-//       candidateUserId: userId,
-//       status: "ACCEPTED",
-//     },
-//   });
-
-//   if (!invitation) {
-//     throw new Error("You are not accepted for this assessment");
-//   }
-
-//   const attempts = await prisma.assessmentAttempt.findMany({
-//     where: {
-//       assessmentId,
-//       candidateId: userId,
-//     },
-//     orderBy: {
-//       attemptNumber: "desc",
-//     },
-//   });
-
-//   if (attempts.length >= assessment.maxAttempts) {
-//     throw new Error("You have reached the maximum number of attempts");
-//   }
-
-//   const activeAttempt = attempts.find(
-//     (attempt) => attempt.status === "IN_PROGRESS",
-//   );
-
-//   if (activeAttempt) {
-//     return activeAttempt;
-//   }
-
-//   const attemptNumber = attempts.length + 1;
-
-//   const attempt = await prisma.assessmentAttempt.create({
-//     data: {
-//       assessmentId,
-//       candidateId: userId,
-//       attemptNumber,
-//       status: "IN_PROGRESS",
-//       startedAt: new Date(),
-//     },
-//     include: {
-//       assessment: true,
-//     },
-//   });
-
-//   return attempt;
-// };
 
 const startAssessment = async (userId: string, assessmentId: string) => {
   const assessment = await prisma.assessment.findUnique({
@@ -296,7 +217,7 @@ const expireAttempts = async () => {
     });
 
     if (result.count > 0) {
-      console.log(`${result.count} assessment attempt(s) expired`);
+      throw new Error(`${result.count} assessment attempts expired`);
     }
   } catch (error) {
     console.error("Failed to expire attempts:", error);

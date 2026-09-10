@@ -15,7 +15,7 @@ const createQuestions = catchAsync(async (req: Request, res: Response) => {
     req.body.questions,
   );
 
-  res.status(201).json({
+  sendResponse(res, {
     success: true,
     message: "Questions created successfully",
     data: result,

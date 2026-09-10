@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AttemptServices } from "./attempt.service";
-import { prisma } from "../../lib/prisma";
 
 const getAttemptQuestions = catchAsync(async (req: Request, res: Response) => {
   const userId = req.data?.id as string;

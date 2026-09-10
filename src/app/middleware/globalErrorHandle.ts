@@ -1,9 +1,9 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 import type { NextFunction, Request, Response } from "express";
 import { Prisma } from "../../../generated/prisma/client";
 import config from "../config";
 
 export const globalErrorHandler = (
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   err: any,
   _req: Request,
   res: Response,

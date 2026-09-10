@@ -1,14 +1,14 @@
 model AssessmentInvitation {
-  id           String           @id @default(uuid())
-  assessmentId String
-  candidateUserId  String
-  status       InvitationStatus @default(PENDING)
-  invitedAt    DateTime         @default(now())
-  acceptedAt   DateTime?
+  id              String           @id @default(uuid())
+  assessmentId    String
+  candidateUserId String
+  status          InvitationStatus @default(PENDING)
+  invitedAt       DateTime         @default(now())
+  acceptedAt      DateTime?
 
-  assessment Assessment       @relation(fields: [assessmentId],references: [id],onDelete:Cascade)
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
-  candidate User @relation(fields: [candidateUserId], references: [id],onDelete: Cascade)
+  candidate User @relation(fields: [candidateUserId], references: [id], onDelete: Cascade)
 
   @@unique([assessmentId, candidateUserId])
   @@map("assessmentInvitations")

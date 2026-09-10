@@ -24,6 +24,8 @@ const createAssessment = async (
       passingScore: payload.passingScore,
       maxAttempts: payload.maxAttempts ?? 1,
 
+      price: payload.price ?? 0,
+
       startAt: payload.startAt ? new Date(payload.startAt) : undefined,
 
       endAt: payload.endAt ? new Date(payload.endAt) : undefined,
@@ -50,6 +52,7 @@ const createAssessment = async (
 
   return assessment;
 };
+
 const deleteAssessment = async (
   assessmentId: string,
   companyUserId: string,
@@ -93,7 +96,6 @@ const deleteAssessment = async (
 
   return {
     assessmentId,
-    // message: "Assessment deleted successfully",
   };
 };
 
@@ -114,7 +116,6 @@ const addQuestionsToAssessment = async (
 
   if (!assessment) throw new Error("Assessment not found");
 
-  // Loop/Transaction চালিয়ে প্রতিটি প্রশ্ন সেভ করুন
   const createdQuestions = await prisma.$transaction(
     questionsData.map((item) =>
       prisma.assessmentQuestion.create({
@@ -122,7 +123,6 @@ const addQuestionsToAssessment = async (
           assessmentId,
           questionId: item.questionId,
           order: item.order,
-          // marks: item.marks,
         },
         include: {
           questions: {
@@ -153,24 +153,59 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
       companyId: company.id,
     },
   });
-  console.log("now get assessment", assessment);
 
   if (!assessment) {
     throw new Error("Assessment not found");
   }
 
   if (assessment.status === "PUBLISHED") {
-    throw new Error("Assessment is already published");
+    const publishedAssessment = await prisma.assessment.findUnique({
+      where: {
+        id: assessmentId,
+      },
+      include: {
+        company: true,
+
+        questions: {
+          include: {
+            questions: {
+              include: {
+                options: true,
+              },
+            },
+          },
+          orderBy: {
+            order: "asc",
+          },
+        },
+      },
+    });
+
+    return publishedAssessment;
   }
 
   const questionCount = await prisma.assessmentQuestion.count({
     where: {
-      assessmentId: assessmentId,
+      assessmentId,
     },
   });
 
   if (questionCount === 0) {
     throw new Error("Cannot publish assessment without questions");
+  }
+
+  const payment = await prisma.payment.findFirst({
+    where: {
+      assessmentId: assessment.id,
+      companyId: company.id,
+      status: "PAID",
+    },
+  });
+
+  if (!payment) {
+    throw new Error(
+      "Please make payment first before publishing this assessment",
+    );
   }
 
   const publishedAssessment = await prisma.assessment.update({
@@ -200,7 +235,6 @@ const publishAssessment = async (userId: string, assessmentId: string) => {
 
   return publishedAssessment;
 };
-
 const inviteCandidate = async (
   userId: string,
   assessmentId: string,

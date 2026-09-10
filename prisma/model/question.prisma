@@ -8,13 +8,13 @@ model Question {
   marks       Float
   option      String?
 
-  options     QuestionOption[]
+  options QuestionOption[]
 
   assessments AssessmentQuestion[]
-  answers AssessmentAnswer[]
+  answers     AssessmentAnswer[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("questions")
 }

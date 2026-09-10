@@ -59,10 +59,6 @@ const updateUserRole = async (
 };
 
 const getDashboardStats = async () => {
-  // =========================
-  // USER STATISTICS
-  // =========================
-
   const totalUsers = await prisma.user.count();
 
   const totalCandidates = await prisma.user.count({
@@ -83,15 +79,10 @@ const getDashboardStats = async () => {
     },
   });
 
-  // =========================
-  // ASSESSMENT STATISTICS
-  // =========================
-
   const totalAssessments = await prisma.assessment.count();
 
   const publishedAssessments = await prisma.assessment.count({
     where: {
-      // তোমার schema অনুযায়ী field/status adjust করবে
       status: "PUBLISHED",
     },
   });
@@ -101,10 +92,6 @@ const getDashboardStats = async () => {
       status: "DRAFT",
     },
   });
-
-  // =========================
-  // ATTEMPT STATISTICS
-  // =========================
 
   const totalAttempts = await prisma.assessmentAttempt.count();
 
@@ -126,18 +113,12 @@ const getDashboardStats = async () => {
     },
   });
 
-  // =========================
-  // RESULT STATISTICS
-  // =========================
-
   const evaluatedAttempts = await prisma.assessmentAttempt.count({
     where: {
       status: "COMPLETED",
     },
   });
 
-  // যদি তোমার result/score field থাকে,
-  // তাহলে passed/failed সেখান থেকে calculate করবে।
   const passedCandidates = await prisma.assessmentAttempt.count({
     where: {
       status: "COMPLETED",
@@ -151,10 +132,6 @@ const getDashboardStats = async () => {
       passed: false,
     },
   });
-
-  // =========================
-  // FINAL RESPONSE
-  // =========================
 
   return {
     users: {
