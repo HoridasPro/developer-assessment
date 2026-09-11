@@ -14,3 +14,18 @@ export interface ICreateQuestionPayload {
     isCorrect: boolean;
   }[];
 }
+export interface IUpdateQuestionPayload {
+  id: string;
+  title: string;
+  description?: string;
+  type: QuestionType;
+  category: string;
+  difficulty: Difficulty;
+  marks: number;
+  option: string;
+
+  options?: {
+    text: string;
+    isCorrect: boolean;
+  }[];
+}

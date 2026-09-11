@@ -2,6 +2,8 @@ import { Router } from "express";
 import { Role } from "../../../../generated/prisma/enums";
 import { auth } from "../../middleware/auth";
 import { InvitationController } from "./invitation.controller";
+import { validateRequest } from "../../middleware/validationRequest";
+import { InvitationValidation } from "./invitation.validation";
 
 const router = Router();
 
@@ -19,6 +21,7 @@ router.post(
 
 router.patch(
   "/status/:invitationId",
+  validateRequest(InvitationValidation.statusValidationSchema),
   auth(Role.CANDIDATE),
   InvitationController.acceptInvitation,
 );

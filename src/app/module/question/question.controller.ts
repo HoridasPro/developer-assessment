@@ -55,36 +55,22 @@ const deleteQuestion = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateQuestion = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.data?.id;
-
-  if (!userId) {
-    throw new Error("User not authenticated");
-  }
-
-  const { questionId } = req.params;
-
-  if (Array.isArray(questionId)) {
-    throw new Error("Invalid question ID");
-  }
-
-  const result = await QuestionService.updateQuestion(
-    userId,
-    questionId,
-    req.body,
+const bulkUpdateQuestions = async (req: Request, res: Response) => {
+  const result = await QuestionService.bulkUpdateQuestions(
+    req.data?.id as string,
+    req.body.questions,
   );
 
   sendResponse(res, {
     success: true,
-    message: "Question updated successfully",
+    message: "Questions updated successfully",
     data: result,
   });
-});
-
+};
 export const QuestionController = {
   createQuestions,
   getAllQuestions,
   getQuestionById,
   deleteQuestion,
-  updateQuestion,
+  bulkUpdateQuestions,
 };

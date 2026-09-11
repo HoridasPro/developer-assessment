@@ -1,5 +1,8 @@
 import { prisma } from "../../lib/prisma";
-import { ICreateQuestionPayload } from "./question.interface";
+import {
+  ICreateQuestionPayload,
+  IUpdateQuestionPayload,
+} from "./question.interface";
 
 const createQuestions = async (
   userId: string,
@@ -98,10 +101,9 @@ const deleteQuestion = async (questionId: string) => {
   return null;
 };
 
-const updateQuestion = async (
+const bulkUpdateQuestions = async (
   userId: string,
-  questionId: string,
-  payload: Partial<ICreateQuestionPayload>,
+  questions: IUpdateQuestionPayload[],
 ) => {
   const company = await prisma.companyProfile.findUnique({
     where: {
@@ -113,65 +115,76 @@ const updateQuestion = async (
     throw new Error("Company profile not found");
   }
 
-  const question = await prisma.question.findUnique({
-    where: {
-      id: questionId,
-    },
-  });
+  const results = [];
 
-  if (!question) {
-    throw new Error("Question not found");
-  }
-
-  await prisma.question.update({
-    where: {
-      id: questionId,
-    },
-    data: {
-      title: payload.title,
-      description: payload.description,
-      type: payload.type,
-      category: payload.category,
-      difficulty: payload.difficulty,
-      marks: payload.marks,
-      option: payload.option,
-    },
-  });
-
-  if (payload.options) {
-    await prisma.questionOption.deleteMany({
+  for (const question of questions) {
+    const existingQuestion = await prisma.question.findUnique({
       where: {
-        questionId,
+        id: question.id,
       },
     });
 
-    if (payload.options.length > 0) {
+    if (!existingQuestion) {
+      throw new Error(`Question not found: ${question.id}`);
+    }
+
+    await prisma.question.update({
+      where: {
+        id: question.id,
+      },
+      data: {
+        title: question.title,
+        description: question.description,
+        type: question.type,
+        category: question.category,
+        difficulty: question.difficulty,
+        marks: question.marks,
+        option: question.option,
+      },
+    });
+
+    if (question.type === "MCQ" && question.options) {
+      await prisma.questionOption.deleteMany({
+        where: {
+          questionId: question.id,
+        },
+      });
+
       await prisma.questionOption.createMany({
-        data: payload.options.map((option) => ({
+        data: question.options.map((option) => ({
           text: option.text,
           isCorrect: option.isCorrect,
-          questionId,
+          questionId: question.id,
         })),
       });
     }
+
+    if (question.type === "WRITTEN" || question.type === "CODING") {
+      await prisma.questionOption.deleteMany({
+        where: {
+          questionId: question.id,
+        },
+      });
+    }
+
+    const result = await prisma.question.findUnique({
+      where: {
+        id: question.id,
+      },
+      include: {
+        options: true,
+      },
+    });
+
+    results.push(result);
   }
 
-  const result = await prisma.question.findUnique({
-    where: {
-      id: questionId,
-    },
-    include: {
-      options: true,
-    },
-  });
-
-  return result;
+  return results;
 };
-
 export const QuestionService = {
   createQuestions,
   getAllQuestions,
   getQuestionById,
   deleteQuestion,
-  updateQuestion,
+  bulkUpdateQuestions,
 };

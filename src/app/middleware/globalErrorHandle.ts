@@ -2,6 +2,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { Prisma } from "../../../generated/prisma/client";
 import config from "../config";
+import { ZodError } from "zod";
 
 export const globalErrorHandler = (
   err: any,
@@ -16,8 +17,13 @@ export const globalErrorHandler = (
   let statusCode = 500;
   let errorMessage = "Something went wrong";
   const errors: unknown[] = [];
+  // Zod Error
+  if (err instanceof ZodError) {
+    statusCode = 400;
+    errorMessage = err.issues[0]?.message || "Validation Error";
 
-  if (err instanceof Prisma.PrismaClientValidationError) {
+    // prisma error
+  } else if (err instanceof Prisma.PrismaClientValidationError) {
     statusCode = 400;
     errorMessage = "Invalid data provided";
   } else if (err instanceof Prisma.PrismaClientKnownRequestError) {

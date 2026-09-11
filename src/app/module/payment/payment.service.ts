@@ -163,7 +163,43 @@ const handleWebhook = async (sessionId: string) => {
   };
 };
 
+const getPaymentById = async (paymentId: string, userId: string) => {
+  const payment = await prisma.payment.findFirst({
+    where: {
+      id: paymentId,
+      company: {
+        userId: userId,
+      },
+    },
+  });
+
+  return payment;
+};
+
+const getAllPayments = async (userId: string) => {
+  const payments = await prisma.payment.findMany({
+    where: {
+      company: {
+        userId: userId,
+      },
+    },
+    include: {
+      assessment: true,
+      company: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return payments;
+};
+
+ 
+
 export const PaymentService = {
   initiatePayment,
   handleWebhook,
+  getPaymentById,
+  getAllPayments
 };

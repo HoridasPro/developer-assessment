@@ -36,7 +36,32 @@ const handleWebhook = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPaymentById = async (req: Request, res: Response) => {
+  const payment = await PaymentService.getPaymentById(
+    req.params.id as string,
+    req.data?.id as string,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Payment fetched successfully",
+    data: payment,
+  });
+};
+
+const getAllPayments = async (req: Request, res: Response) => {
+  const payments = await PaymentService.getAllPayments(req.data?.id as string);
+
+  sendResponse(res, {
+    success: true,
+    message: "Payment history fetched successfully",
+    data: payments,
+  });
+};
+
 export const PaymentController = {
   initiatePayment,
   handleWebhook,
+  getPaymentById,
+  getAllPayments,
 };
