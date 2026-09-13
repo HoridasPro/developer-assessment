@@ -1,31 +1,31 @@
-import { Difficulty, QuestionType } from "../../../../generated/prisma/enums";
+import type { Difficulty, QuestionType } from "../../../../generated/prisma/enums";
 
 export interface ICreateQuestionPayload {
-  title: string;
-  description?: string;
-  type: QuestionType;
-  category: string;
-  difficulty: Difficulty;
-  marks: number;
-  option: string;
+	title: string;
+	description?: string;
+	type: QuestionType;
+	category: string;
+	difficulty: Difficulty;
+	marks: number;
+	option: string;
 
-  options?: {
-    text: string;
-    isCorrect: boolean;
-  }[];
+	options?: {
+		text: string;
+		isCorrect: boolean;
+	}[];
 }
 export interface IUpdateQuestionPayload {
-  id: string;
-  title: string;
-  description?: string;
-  type: QuestionType;
-  category: string;
-  difficulty: Difficulty;
-  marks: number;
-  option: string;
+	id: string;
+	title: string;
+	description?: string;
+	type: QuestionType;
+	category: string;
+	difficulty: Difficulty;
+	marks: number;
+	option: string;
 
-  options?: {
-    text: string;
-    isCorrect: boolean;
-  }[];
+	options?: {
+		text: string;
+		isCorrect: boolean;
+	}[];
 }

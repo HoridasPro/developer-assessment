@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, type Request, type Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AuthService } from "./auth.service";
@@ -16,7 +16,7 @@ const registerUserControllerDB = catchAsync(
   },
 );
 
-const userLoginDB = catchAsync(async (req: Request, res: Response) => {
+const userLogin = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const { accessToken, refreshToken } = await AuthService.userLogin(payload);
 
@@ -40,8 +40,31 @@ const userLoginDB = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const googleLogin = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.googleLogin(req.body);
+
+  const { accessToken, refreshToken } = result;
+
+  res.cookie("accessToken", accessToken, {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "none",
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "none",
+  });
+
+  sendResponse(res, {
+    success: true,
+    message: "Google login successful!",
+    data: { accessToken, refreshToken },
+  });
+});
 const refreshTokenDB = catchAsync(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!refreshToken) {
     throw new Error("Refresh token is required");
@@ -55,9 +78,9 @@ const refreshTokenDB = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 export const AuthController = {
   registerUserControllerDB,
-  userLoginDB,
+  userLogin,
+  googleLogin,
   refreshTokenDB,
 };

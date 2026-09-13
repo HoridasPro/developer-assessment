@@ -8,55 +8,55 @@ import { AssessmentValidation } from "./assessment.validation";
 const router = Router();
 
 router.post(
-  "/assessments",
-  validateRequest(AssessmentValidation.createAssessmentValidationSchema),
-  auth(Role.COMPANY),
-  AssessmentController.createAssessmentDB,
+	"/assessments",
+	validateRequest(AssessmentValidation.createAssessmentValidationSchema),
+	auth(Role.COMPANY),
+	AssessmentController.createAssessmentDB,
 );
 
 router.delete(
-  "/assessment/:assessmentId",
-  auth(Role.COMPANY),
-  AssessmentController.deleteAssessment,
+	"/assessment/:assessmentId",
+	auth(Role.COMPANY),
+	AssessmentController.deleteAssessment,
 );
 router.post(
-  "/questions/:assessmentId",
-  validateRequest(
-    AssessmentValidation.addQuestionsToAssessmentValidationSchema,
-  ),
-  auth(Role.COMPANY),
-  AssessmentController.addQuestionToAssessmentDB,
+	"/questions/:assessmentId",
+	validateRequest(
+		AssessmentValidation.addQuestionsToAssessmentValidationSchema,
+	),
+	auth(Role.COMPANY),
+	AssessmentController.addQuestionToAssessmentDB,
 );
 
 router.patch(
-  "/publish/:assessmentId",
-  auth(Role.COMPANY),
-  AssessmentController.publishAssessment,
+	"/publish/:assessmentId",
+	auth(Role.COMPANY),
+	AssessmentController.publishAssessment,
 );
 
 router.post(
-  "/asign/:assessmentId",
-  validateRequest(AssessmentValidation.inviteCandidateValidationSchema),
-  auth(Role.COMPANY),
-  AssessmentController.inviteCandidate,
+	"/asign/:assessmentId",
+	validateRequest(AssessmentValidation.inviteCandidateValidationSchema),
+	auth(Role.COMPANY),
+	AssessmentController.inviteCandidate,
 );
 
 router.get(
-  "/search/assessments",
-  auth(Role.COMPANY),
-  AssessmentController.searchAssessments,
+	"/search/assessments",
+	auth(Role.COMPANY),
+	AssessmentController.searchAssessments,
 );
 
 router.get(
-  "/assessments",
-  auth(Role.COMPANY),
-  AssessmentController.getAllAssessments,
+	"/assessments",
+	auth(Role.COMPANY),
+	AssessmentController.getAllAssessments,
 );
 
 router.get(
-  "/assessments/:assessmentId",
-  auth(Role.COMPANY),
-  AssessmentController.getAssessmentById,
+	"/assessments/:assessmentId",
+	auth(Role.COMPANY),
+	AssessmentController.getAssessmentById,
 );
 
 export const AssessmentRoutes = router;

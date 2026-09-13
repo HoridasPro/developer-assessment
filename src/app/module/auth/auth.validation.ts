@@ -80,38 +80,26 @@ const createUserValidationSchema = z.object({
 const userLoginValidationSchema = z.object({
   body: z.object({
     email: z
-      .string()
+      .string({ message: "Email is required" })
       .trim()
-      .min(1, "Email is required")
-      .refine(
-        (value) => value === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
-        {
-          message: "Email is not valid",
-        },
-      ),
+      .email("Email is not valid"),
     password: z
-      .string()
+      .string({ message: "Password is required" })
       .trim()
-      .superRefine((value, ctx) => {
-        if (!value) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Password is required",
-          });
-          return;
-        }
-
-        if (value.length < 6) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Password must be at least 6 characters",
-          });
-        }
-      }),
+      .min(6, "Password must be at least 6 characters"),
   }),
 });
 
+export const googleLoginValidationSchema = z.object({
+  body: z.object({
+    idToken: z
+      .string({ message: "ID Token is required" })
+      .min(1, "ID Token cannot be empty"),
+    role: z.enum(["CANDIDATE", "COMPANY"]).optional(),
+  }),
+});
 export const AuthValidation = {
   createUserValidationSchema,
   userLoginValidationSchema,
+  googleLoginValidationSchema,
 };

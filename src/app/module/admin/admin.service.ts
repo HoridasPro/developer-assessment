@@ -1,234 +1,234 @@
 import { prisma } from "../../lib/prisma";
 
 const getAllUsers = async () => {
-  const users = await prisma.user.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+	const users = await prisma.user.findMany({
+		orderBy: {
+			createdAt: "desc",
+		},
+	});
 
-  return users;
+	return users;
 };
 
 const updateUserRole = async (
-  userId: string,
-  role: "ADMIN" | "CANDIDATE" | "COMPANY",
-  adminId: string,
+	userId: string,
+	role: "ADMIN" | "CANDIDATE" | "COMPANY",
+	adminId: string,
 ) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
+	const user = await prisma.user.findUnique({
+		where: {
+			id: userId,
+		},
+	});
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+	if (!user) {
+		throw new Error("User not found");
+	}
 
-  const oldRole = user.role;
-  if (oldRole === role) {
-    throw new Error("User already has this role");
-  }
+	const oldRole = user.role;
+	if (oldRole === role) {
+		throw new Error("User already has this role");
+	}
 
-  const updatedUser = await prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      role,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
-  });
+	const updatedUser = await prisma.user.update({
+		where: {
+			id: userId,
+		},
+		data: {
+			role,
+		},
+		select: {
+			id: true,
+			name: true,
+			email: true,
+			role: true,
+		},
+	});
 
-  await prisma.auditLog.create({
-    data: {
-      action: "ROLE_UPDATED",
-      performedBy: adminId,
-      targetUser: userId,
-      oldValue: oldRole,
-      newValue: role,
-    },
-  });
+	await prisma.auditLog.create({
+		data: {
+			action: "ROLE_UPDATED",
+			performedBy: adminId,
+			targetUser: userId,
+			oldValue: oldRole,
+			newValue: role,
+		},
+	});
 
-  return updatedUser;
+	return updatedUser;
 };
 
 const getDashboardStats = async () => {
-  const totalUsers = await prisma.user.count();
+	const totalUsers = await prisma.user.count();
 
-  const totalCandidates = await prisma.user.count({
-    where: {
-      role: "CANDIDATE",
-    },
-  });
+	const totalCandidates = await prisma.user.count({
+		where: {
+			role: "CANDIDATE",
+		},
+	});
 
-  const totalCompanies = await prisma.user.count({
-    where: {
-      role: "COMPANY",
-    },
-  });
+	const totalCompanies = await prisma.user.count({
+		where: {
+			role: "COMPANY",
+		},
+	});
 
-  const totalAdmins = await prisma.user.count({
-    where: {
-      role: "ADMIN",
-    },
-  });
+	const totalAdmins = await prisma.user.count({
+		where: {
+			role: "ADMIN",
+		},
+	});
 
-  const totalAssessments = await prisma.assessment.count();
+	const totalAssessments = await prisma.assessment.count();
 
-  const publishedAssessments = await prisma.assessment.count({
-    where: {
-      status: "PUBLISHED",
-    },
-  });
+	const publishedAssessments = await prisma.assessment.count({
+		where: {
+			status: "PUBLISHED",
+		},
+	});
 
-  const draftAssessments = await prisma.assessment.count({
-    where: {
-      status: "DRAFT",
-    },
-  });
+	const draftAssessments = await prisma.assessment.count({
+		where: {
+			status: "DRAFT",
+		},
+	});
 
-  const totalAttempts = await prisma.assessmentAttempt.count();
+	const totalAttempts = await prisma.assessmentAttempt.count();
 
-  const completedAttempts = await prisma.assessmentAttempt.count({
-    where: {
-      status: "COMPLETED",
-    },
-  });
+	const completedAttempts = await prisma.assessmentAttempt.count({
+		where: {
+			status: "COMPLETED",
+		},
+	});
 
-  const inProgressAttempts = await prisma.assessmentAttempt.count({
-    where: {
-      status: "IN_PROGRESS",
-    },
-  });
+	const inProgressAttempts = await prisma.assessmentAttempt.count({
+		where: {
+			status: "IN_PROGRESS",
+		},
+	});
 
-  const expiredAttempts = await prisma.assessmentAttempt.count({
-    where: {
-      status: "EXPIRED",
-    },
-  });
+	const expiredAttempts = await prisma.assessmentAttempt.count({
+		where: {
+			status: "EXPIRED",
+		},
+	});
 
-  const evaluatedAttempts = await prisma.assessmentAttempt.count({
-    where: {
-      status: "COMPLETED",
-    },
-  });
+	const evaluatedAttempts = await prisma.assessmentAttempt.count({
+		where: {
+			status: "COMPLETED",
+		},
+	});
 
-  const passedCandidates = await prisma.assessmentAttempt.count({
-    where: {
-      status: "COMPLETED",
-      passed: true,
-    },
-  });
+	const passedCandidates = await prisma.assessmentAttempt.count({
+		where: {
+			status: "COMPLETED",
+			passed: true,
+		},
+	});
 
-  const failedCandidates = await prisma.assessmentAttempt.count({
-    where: {
-      status: "COMPLETED",
-      passed: false,
-    },
-  });
+	const failedCandidates = await prisma.assessmentAttempt.count({
+		where: {
+			status: "COMPLETED",
+			passed: false,
+		},
+	});
 
-  return {
-    users: {
-      total: totalUsers,
-      candidates: totalCandidates,
-      companies: totalCompanies,
-      admins: totalAdmins,
-    },
+	return {
+		users: {
+			total: totalUsers,
+			candidates: totalCandidates,
+			companies: totalCompanies,
+			admins: totalAdmins,
+		},
 
-    assessments: {
-      total: totalAssessments,
-      published: publishedAssessments,
-      draft: draftAssessments,
-    },
+		assessments: {
+			total: totalAssessments,
+			published: publishedAssessments,
+			draft: draftAssessments,
+		},
 
-    attempts: {
-      total: totalAttempts,
-      completed: completedAttempts,
-      inProgress: inProgressAttempts,
-      expired: expiredAttempts,
-    },
+		attempts: {
+			total: totalAttempts,
+			completed: completedAttempts,
+			inProgress: inProgressAttempts,
+			expired: expiredAttempts,
+		},
 
-    results: {
-      evaluated: evaluatedAttempts,
-      passed: passedCandidates,
-      failed: failedCandidates,
-    },
-  };
+		results: {
+			evaluated: evaluatedAttempts,
+			passed: passedCandidates,
+			failed: failedCandidates,
+		},
+	};
 };
 
 const getAuditLogs = async () => {
-  const logs = await prisma.auditLog.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      admin: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-        },
-      },
-    },
-  });
+	const logs = await prisma.auditLog.findMany({
+		orderBy: {
+			createdAt: "desc",
+		},
+		include: {
+			admin: {
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					role: true,
+				},
+			},
+		},
+	});
 
-  return logs;
+	return logs;
 };
 
 const suspendUser = async (userId: string, adminId: string) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
+	const user = await prisma.user.findUnique({
+		where: {
+			id: userId,
+		},
+	});
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+	if (!user) {
+		throw new Error("User not found");
+	}
 
-  if (user.status === "SUSPENDED") {
-    throw new Error("User is already suspended");
-  }
+	if (user.status === "SUSPENDED") {
+		throw new Error("User is already suspended");
+	}
 
-  const updatedUser = await prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      status: "SUSPENDED",
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      status: true,
-    },
-  });
+	const updatedUser = await prisma.user.update({
+		where: {
+			id: userId,
+		},
+		data: {
+			status: "SUSPENDED",
+		},
+		select: {
+			id: true,
+			name: true,
+			email: true,
+			role: true,
+			status: true,
+		},
+	});
 
-  await prisma.auditLog.create({
-    data: {
-      action: "USER_SUSPENDED",
-      performedBy: adminId,
-      targetUser: userId,
-      oldValue: user.status,
-      newValue: "SUSPENDED",
-    },
-  });
+	await prisma.auditLog.create({
+		data: {
+			action: "USER_SUSPENDED",
+			performedBy: adminId,
+			targetUser: userId,
+			oldValue: user.status,
+			newValue: "SUSPENDED",
+		},
+	});
 
-  return updatedUser;
+	return updatedUser;
 };
 export const AdminServices = {
-  getAllUsers,
-  updateUserRole,
-  getDashboardStats,
-  getAuditLogs,
-  suspendUser,
+	getAllUsers,
+	updateUserRole,
+	getDashboardStats,
+	getAuditLogs,
+	suspendUser,
 };

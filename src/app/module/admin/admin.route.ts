@@ -9,7 +9,7 @@ const router = Router();
 
 router.get("/users", auth(Role.ADMIN), AdminController.getAllUsers);
 router.patch(
-  "/users/:id/role",
+  "/users/role/:id",
   validateRequest(AdminValidation.roleValidationSchema),
   auth(Role.ADMIN),
   AdminController.updateUserRole,
@@ -22,7 +22,7 @@ router.get(
 router.get("/audit-logs", auth(Role.ADMIN), AdminController.getAuditLogs);
 
 router.patch(
-  "/users/:id/suspend",
+  "/users/suspend/:id",
   auth(Role.ADMIN),
   AdminController.suspendUser,
 );

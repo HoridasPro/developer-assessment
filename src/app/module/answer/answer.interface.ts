@@ -1,6 +1,6 @@
 export interface ISubmitAnswerPayload {
-  questionId: string;
-  selectedOptionId?: string;
-  writtenAnswer?: string;
-  codeAnswer?: string;
+	questionId: string;
+	selectedOptionId?: string;
+	writtenAnswer?: string;
+	codeAnswer?: string;
 }

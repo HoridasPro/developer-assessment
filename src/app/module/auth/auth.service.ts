@@ -3,8 +3,9 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import config from "../../config";
-import { IUserLoginPayload, IUserRegisterPayload } from "./auth.interface";
-import { SignOptions } from "jsonwebtoken";
+import type { IUserLoginPayload, IUserRegisterPayload } from "./auth.interface";
+import type { SignOptions } from "jsonwebtoken";
+import { googleClient } from "../../lib/googleAuth";
 import { Role } from "../../../../generated/prisma/enums";
 
 const registerUser = async (payload: IUserRegisterPayload) => {
@@ -63,6 +64,9 @@ const userLogin = async (payload: IUserLoginPayload) => {
     throw new Error("Your account has been suspended");
   }
 
+  if (!user || !user.password) {
+    throw new Error("Invalid credentials or account uses social login.");
+  }
   const isPasswordMatched = await bcrypt.compare(password, user.password);
   if (!isPasswordMatched) {
     throw new Error("Password is not matched");
@@ -72,11 +76,11 @@ const userLogin = async (payload: IUserLoginPayload) => {
   const jwt_refresh_secret = config.jwt_refresh_secret;
 
   if (!jwt_access_secret) {
-    throw new Error("JWT_ACCESS_SECRET is not defined");
+    throw new Error("Jwt access secret is not defined");
   }
 
   if (!jwt_refresh_secret) {
-    throw new Error("JWT_refresh_SECRET is not defined");
+    throw new Error("Jwt refresh secret is not defined");
   }
 
   const jwtPayload = {
@@ -100,10 +104,78 @@ const userLogin = async (payload: IUserLoginPayload) => {
   };
 };
 
+const googleLogin = async (payload: { idToken: string; role?: string }) => {
+  const { idToken, role } = payload;
+
+  if (!idToken) {
+    throw new Error("Token is required");
+  }
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: config.google_client_id,
+  });
+
+  const googleUser = ticket.getPayload();
+
+  if (!googleUser || !googleUser.email) {
+    throw new Error("Invalid Google Token");
+  }
+
+  let user = await prisma.user.findUnique({
+    where: {
+      email: googleUser.email,
+    },
+  });
+
+  if (!user) {
+    let assignedRole: Role = Role.CANDIDATE;
+
+    if (role === "COMPANY" || role === Role.COMPANY) {
+      assignedRole = Role.COMPANY;
+    } else if (role === "CANDIDATE" || role === Role.CANDIDATE) {
+      assignedRole = Role.CANDIDATE;
+    }
+
+    user = await prisma.user.create({
+      data: {
+        email: googleUser.email,
+        name: googleUser.name as string,
+        profilePhoto: googleUser.picture || "",
+        authProvider: "GOOGLE",
+        googleId: googleUser.sub,
+        role: assignedRole,
+      },
+    });
+  }
+
+  const jwtPayload = {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    { expiresIn: config.jwt_access_expires_in } as SignOptions,
+  );
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    { expiresIn: config.jwt_refresh_expires_in } as SignOptions,
+  );
+
+  return { accessToken, refreshToken };
+};
+
 const refreshToken = async (token: string) => {
   if (!config.jwt_refresh_secret) {
-    throw new Error("JWT refrehs secret is not defined");
+    throw new Error("JWT refresh secret is not defined");
   }
+
   const verifiedToken = jwtUtils.verifyToken(token, config.jwt_refresh_secret);
 
   if (!verifiedToken.success) {
@@ -111,14 +183,21 @@ const refreshToken = async (token: string) => {
   }
 
   const payload = verifiedToken.data as {
-    id: string;
+    id?: string;
+    userId?: string;
     email: string;
     role: Role;
   };
 
+  const userId = payload.id || payload.userId;
+
+  if (!userId) {
+    throw new Error("Invalid token payload: User ID missing");
+  }
+
   const user = await prisma.user.findUnique({
     where: {
-      id: payload.id,
+      id: userId,
     },
   });
 
@@ -129,9 +208,11 @@ const refreshToken = async (token: string) => {
   if (!user.isActive) {
     throw new Error("User account is inactive");
   }
+
   if (!config.jwt_access_secret) {
     throw new Error("JWT access secret is not defined");
   }
+
   const accessToken = jwtUtils.createToken(
     {
       id: user.id,
@@ -143,13 +224,14 @@ const refreshToken = async (token: string) => {
       expiresIn: config.jwt_access_expires_in as SignOptions["expiresIn"],
     },
   );
+
   return {
     accessToken,
   };
 };
-
 export const AuthService = {
   registerUser,
   userLogin,
   refreshToken,
+  googleLogin,
 };
