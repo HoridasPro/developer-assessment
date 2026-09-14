@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/correctness/noUnusedVariables: <explanation> */
-import app from "./app";
+import app from "./app.ts";
 import config from "./app/config";
 import { prisma } from "./app/lib/prisma";
 import cron from "node-cron";
