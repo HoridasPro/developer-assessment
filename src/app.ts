@@ -6,16 +6,16 @@ import express, {
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import { AuhtRoutes } from "./app/module/auth/auth.route";
-import { globalErrorHandler } from "./app/middleware/globalErrorHandle";
+import { AuhtRoutes } from "./app/module/auth/auth.route.ts";
+import { globalErrorHandler } from "./app/middleware/globalErrorHandle.ts";
 import { UserRoutes } from "./app/module/user/user.route";
-import { AssessmentRoutes } from "./app/module/assessment/assessment.route";
-import { QuestionRoutes } from "./app/module/question/question.route";
-import { InvitationRoutes } from "./app/module/invitation/invitation.route";
-import { AttemptRoutes } from "./app/module/attempt/attempt.route";
-import { AnswerRoutes } from "./app/module/answer/answer.route";
-import { AdminRoutes } from "./app/module/admin/admin.route";
-import { PaymentRoutes } from "./app/module/payment/payment.route";
+import { AssessmentRoutes } from "./app/module/assessment/assessment.route.ts";
+import { QuestionRoutes } from "./app/module/question/question.route.ts";
+import { InvitationRoutes } from "./app/module/invitation/invitation.route.ts";
+import { AttemptRoutes } from "./app/module/attempt/attempt.route.ts";
+import { AnswerRoutes } from "./app/module/answer/answer.route.ts";
+import { AdminRoutes } from "./app/module/admin/admin.route.ts";
+import { PaymentRoutes } from "./app/module/payment/payment.route.ts";
 
 const app: Application = express();
 app.use(
