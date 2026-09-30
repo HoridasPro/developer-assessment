@@ -8,16 +8,16 @@ import { AnswerValidation } from "./answer.validation";
 const router = Router();
 
 router.post(
-	"/questions/answer/:attemptId",
-	validateRequest(AnswerValidation.submitAnswersValidationSchema),
-	auth(Role.CANDIDATE),
-	AnswerController.saveAnswer,
+  "/questions/answer/:attemptId",
+  validateRequest(AnswerValidation.submitAnswersValidationSchema),
+  auth(Role.CANDIDATE),
+  AnswerController.saveAnswer,
 );
 
 router.patch(
-	"/evaluate-answers/:attemptId",
-	auth(Role.COMPANY),
-	AnswerController.evaluateAnswers,
+  "/evaluate-answers/:attemptId",
+  auth(Role.COMPANY),
+  AnswerController.evaluateAnswers,
 );
 
 export const AnswerRoutes = router;

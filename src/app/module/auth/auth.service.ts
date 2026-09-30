@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
-import bcrypt from "bcryptjs";
+// import bcrypt from "bcryptjs";
+
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import config from "../../config";
@@ -7,6 +8,56 @@ import type { IUserLoginPayload, IUserRegisterPayload } from "./auth.interface";
 import type { SignOptions } from "jsonwebtoken";
 import { googleClient } from "../../lib/googleAuth";
 import { Role } from "../../../../generated/prisma/enums";
+
+import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
+import { sendVerificationEmail } from "../../utils/sendEmail";
+
+// const registerUser = async (payload: IUserRegisterPayload) => {
+//   const { name, password, profilePhoto, role, status, isActive } = payload;
+//   const email = payload.email.trim().toLowerCase();
+
+//   const isUserExists = await prisma.user.findUnique({
+//     where: { email },
+//     omit: {
+//       password: true,
+//     },
+//   });
+
+//   if (role !== Role.CANDIDATE && role !== Role.COMPANY) {
+//     throw new Error("Only candidate and company can register");
+//   }
+
+//   if (isUserExists) {
+//     throw new Error("User already exists");
+//   }
+
+//   const hashedPassword = await bcrypt.hash(password, 10);
+
+//   const newUser = await prisma.user.create({
+//     data: {
+//       name,
+//       email,
+//       password: hashedPassword,
+//       profilePhoto,
+//       role,
+//       status,
+//       isActive,
+//       // accountStatus,
+//     },
+//   });
+//   const result = {
+//     id: newUser.id,
+//     name: newUser.name,
+//     email: newUser.email,
+//     profilePhoto: newUser.profilePhoto,
+//     role: newUser.role,
+//     status: newUser.status,
+//     isActive: newUser.isActive,
+//   };
+
+//   return result;
+// };
 
 const registerUser = async (payload: IUserRegisterPayload) => {
   const { name, password, profilePhoto, role, status, isActive } = payload;
@@ -29,6 +80,12 @@ const registerUser = async (payload: IUserRegisterPayload) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Generate verification token
+  const verificationToken = randomBytes(32).toString("hex");
+
+  // Token will expire after 15 minutes
+  const verificationTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
   const newUser = await prisma.user.create({
     data: {
       name,
@@ -38,9 +95,17 @@ const registerUser = async (payload: IUserRegisterPayload) => {
       role,
       status,
       isActive,
-      // accountStatus,
+
+      // Email verification
+      emailVerified: false,
+      verificationToken,
+      verificationTokenExpiry,
     },
   });
+
+  // Send verification email
+  await sendVerificationEmail(newUser.email, newUser.name, verificationToken);
+
   const result = {
     id: newUser.id,
     name: newUser.name,
@@ -49,9 +114,46 @@ const registerUser = async (payload: IUserRegisterPayload) => {
     role: newUser.role,
     status: newUser.status,
     isActive: newUser.isActive,
+    emailVerified: newUser.emailVerified,
   };
 
   return result;
+};
+
+const verifyEmail = async (token: string) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      verificationToken: token,
+    },
+  });
+
+  if (!user) {
+    throw new Error("Invalid verification token");
+  }
+
+  if (
+    !user.verificationTokenExpiry ||
+    user.verificationTokenExpiry < new Date()
+  ) {
+    throw new Error("Verification token has expired");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      emailVerified: true,
+      verificationToken: null,
+      verificationTokenExpiry: null,
+    },
+  });
+
+  return {
+    id: updatedUser.id,
+    email: updatedUser.email,
+    emailVerified: updatedUser.emailVerified,
+  };
 };
 
 const userLogin = async (payload: IUserLoginPayload) => {
@@ -66,6 +168,9 @@ const userLogin = async (payload: IUserLoginPayload) => {
 
   if (!user || !user.password) {
     throw new Error("Invalid credentials or account uses social login.");
+  }
+  if (!user.emailVerified) {
+    throw new Error("Please verify your email before logging in");
   }
   const isPasswordMatched = await bcrypt.compare(password, user.password);
   if (!isPasswordMatched) {
@@ -231,6 +336,7 @@ const refreshToken = async (token: string) => {
 };
 export const AuthService = {
   registerUser,
+  verifyEmail,
   userLogin,
   refreshToken,
   googleLogin,

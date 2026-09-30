@@ -17,6 +17,12 @@ model User {
   status    ActiveStatus @default(ACTIVE)
   authProvider    AuthProvider         @default(CREDENTIAL)
   isActive  Boolean      @default(true)
+  emailVerified          Boolean   @default(false)
+  verificationToken      String?   @unique
+  verificationTokenExpiry DateTime?
+
+  loginOtp       String?
+  loginOtpExpiry DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
