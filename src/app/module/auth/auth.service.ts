@@ -10,61 +10,22 @@ import { googleClient } from "../../lib/googleAuth";
 import { Role } from "../../../../generated/prisma/enums";
 
 import bcrypt from "bcryptjs";
-import { randomBytes } from "node:crypto";
-import { sendVerificationEmail } from "../../utils/sendEmail";
-
-// const registerUser = async (payload: IUserRegisterPayload) => {
-//   const { name, password, profilePhoto, role, status, isActive } = payload;
-//   const email = payload.email.trim().toLowerCase();
-
-//   const isUserExists = await prisma.user.findUnique({
-//     where: { email },
-//     omit: {
-//       password: true,
-//     },
-//   });
-
-//   if (role !== Role.CANDIDATE && role !== Role.COMPANY) {
-//     throw new Error("Only candidate and company can register");
-//   }
-
-//   if (isUserExists) {
-//     throw new Error("User already exists");
-//   }
-
-//   const hashedPassword = await bcrypt.hash(password, 10);
-
-//   const newUser = await prisma.user.create({
-//     data: {
-//       name,
-//       email,
-//       password: hashedPassword,
-//       profilePhoto,
-//       role,
-//       status,
-//       isActive,
-//       // accountStatus,
-//     },
-//   });
-//   const result = {
-//     id: newUser.id,
-//     name: newUser.name,
-//     email: newUser.email,
-//     profilePhoto: newUser.profilePhoto,
-//     role: newUser.role,
-//     status: newUser.status,
-//     isActive: newUser.isActive,
-//   };
-
-//   return result;
-// };
+import { randomInt } from "node:crypto";
+import {
+  sendLoginOtpEmail,
+  sendVerificationOtpEmail,
+  sendWelcomeEmail,
+} from "../../utils/sendEmail";
 
 const registerUser = async (payload: IUserRegisterPayload) => {
   const { name, password, profilePhoto, role, status, isActive } = payload;
+
   const email = payload.email.trim().toLowerCase();
 
   const isUserExists = await prisma.user.findUnique({
-    where: { email },
+    where: {
+      email,
+    },
     omit: {
       password: true,
     },
@@ -80,11 +41,13 @@ const registerUser = async (payload: IUserRegisterPayload) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Generate verification token
-  const verificationToken = randomBytes(32).toString("hex");
+  const verificationOtp = randomInt(100000, 1000000).toString();
 
-  // Token will expire after 15 minutes
-  const verificationTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+  const verificationOtpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+
+  console.log("VERIFICATION OTP:", verificationOtp);
+
+  console.log("VERIFICATION OTP EXPIRY:", verificationOtpExpiry);
 
   const newUser = await prisma.user.create({
     data: {
@@ -96,15 +59,13 @@ const registerUser = async (payload: IUserRegisterPayload) => {
       status,
       isActive,
 
-      // Email verification
       emailVerified: false,
-      verificationToken,
-      verificationTokenExpiry,
+      verificationOtp,
+      verificationOtpExpiry,
     },
   });
 
-  // Send verification email
-  await sendVerificationEmail(newUser.email, newUser.name, verificationToken);
+  await sendVerificationOtpEmail(newUser.email, newUser.name, verificationOtp);
 
   const result = {
     id: newUser.id,
@@ -120,22 +81,31 @@ const registerUser = async (payload: IUserRegisterPayload) => {
   return result;
 };
 
-const verifyEmail = async (token: string) => {
-  const user = await prisma.user.findFirst({
+const verifyEmailOtp = async (email: string, otp: string) => {
+  const user = await prisma.user.findUnique({
     where: {
-      verificationToken: token,
+      email: email.trim().toLowerCase(),
     },
   });
 
   if (!user) {
-    throw new Error("Invalid verification token");
+    throw new Error("User not found");
   }
 
-  if (
-    !user.verificationTokenExpiry ||
-    user.verificationTokenExpiry < new Date()
-  ) {
-    throw new Error("Verification token has expired");
+  if (user.emailVerified) {
+    throw new Error("Email is already verified");
+  }
+
+  if (!user.verificationOtp || !user.verificationOtpExpiry) {
+    throw new Error("Verification OTP not found");
+  }
+
+  if (user.verificationOtpExpiry < new Date()) {
+    throw new Error("Verification OTP has expired");
+  }
+
+  if (user.verificationOtp !== otp) {
+    throw new Error("Invalid verification OTP");
   }
 
   const updatedUser = await prisma.user.update({
@@ -144,10 +114,12 @@ const verifyEmail = async (token: string) => {
     },
     data: {
       emailVerified: true,
-      verificationToken: null,
-      verificationTokenExpiry: null,
+      verificationOtp: null,
+      verificationOtpExpiry: null,
     },
   });
+
+  await sendWelcomeEmail(updatedUser.email, updatedUser.name);
 
   return {
     id: updatedUser.id,
@@ -158,23 +130,87 @@ const verifyEmail = async (token: string) => {
 
 const userLogin = async (payload: IUserLoginPayload) => {
   const { email, password } = payload;
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { email },
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email.trim().toLowerCase(),
+    },
   });
+
+  if (!user) {
+    throw new Error("Invalid credentials");
+  }
 
   if (user.status === "SUSPENDED") {
     throw new Error("Your account has been suspended");
   }
 
-  if (!user || !user.password) {
+  if (!user.password) {
     throw new Error("Invalid credentials or account uses social login.");
   }
+
   if (!user.emailVerified) {
     throw new Error("Please verify your email before logging in");
   }
+
   const isPasswordMatched = await bcrypt.compare(password, user.password);
+
   if (!isPasswordMatched) {
     throw new Error("Password is not matched");
+  }
+
+  const otp = randomInt(100000, 1000000).toString();
+
+  const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      loginOtp: otp,
+      loginOtpExpiry: otpExpiry,
+    },
+  });
+
+  await sendLoginOtpEmail(user.email, user.name, otp);
+
+  return {
+    email: user.email,
+    message: "Login OTP sent to your email",
+  };
+};
+
+const verifyLoginOtp = async (email: string, otp: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email.trim().toLowerCase(),
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.status === "SUSPENDED") {
+    throw new Error("Your account has been suspended");
+  }
+
+  if (!user.emailVerified) {
+    throw new Error("Please verify your email before logging in");
+  }
+
+  if (!user.loginOtp || !user.loginOtpExpiry) {
+    throw new Error("Login OTP not found");
+  }
+
+  if (user.loginOtpExpiry < new Date()) {
+    throw new Error("Login OTP has expired");
+  }
+
+  // Check OTP
+  if (user.loginOtp !== otp) {
+    throw new Error("Invalid login OTP");
   }
 
   const jwt_access_secret = config.jwt_access_secret;
@@ -189,18 +225,29 @@ const userLogin = async (payload: IUserLoginPayload) => {
   }
 
   const jwtPayload = {
-    id: user.id,
+    userId: user.id,
     email: user.email,
     role: user.role,
   };
-  // accesstoken
+
+  // Access token
   const accessToken = jwtUtils.createToken(jwtPayload, jwt_access_secret, {
     expiresIn: config.jwt_access_expires_in as SignOptions["expiresIn"],
   });
 
-  // refresh token
+  // Refresh token
   const refreshToken = jwtUtils.createToken(jwtPayload, jwt_refresh_secret, {
     expiresIn: config.jwt_refresh_expires_in as SignOptions["expiresIn"],
+  });
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      loginOtp: null,
+      loginOtpExpiry: null,
+    },
   });
 
   return {
@@ -336,8 +383,9 @@ const refreshToken = async (token: string) => {
 };
 export const AuthService = {
   registerUser,
-  verifyEmail,
+  verifyEmailOtp,
   userLogin,
+  verifyLoginOtp,
   refreshToken,
   googleLogin,
 };

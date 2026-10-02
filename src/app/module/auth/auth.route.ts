@@ -11,12 +11,16 @@ router.post(
   AuthController.registerUserControllerDB,
 );
 
-router.get("/verify-email", AuthController.verifyEmail);
+router.post("/verify-email-otp", AuthController.verifyEmailOtp);
+
 router.post(
   "/login",
   validateRequest(AuthValidation.userLoginValidationSchema),
   AuthController.userLogin,
 );
+
+router.post("/verify-login-otp", AuthController.verifyLoginOtp);
+
 router.post(
   "/google-login",
   validateRequest(AuthValidation.googleLoginValidationSchema),

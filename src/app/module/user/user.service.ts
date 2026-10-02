@@ -44,166 +44,256 @@ const getMyProfile = async (userId: string) => {
 	throw new Error("Invalid user role");
 };
 
+// const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
+// 	const user = await prisma.user.findUnique({
+// 		where: {
+// 			id: userId,
+// 		},
+// 	});
+
+// 	if (!user) {
+// 		throw new Error("User not found");
+// 	}
+
+// 	if (payload.name !== undefined || payload.profilePhoto !== undefined) {
+// 		await prisma.user.update({
+// 			where: {
+// 				id: userId,
+// 			},
+
+// 			data: {
+// 				...(payload.name !== undefined && {
+// 					name: payload.name,
+// 				}),
+
+// 				...(payload.profilePhoto !== undefined && {
+// 					profilePhoto: payload.profilePhoto,
+// 				}),
+// 			},
+// 		});
+// 	}
+
+// 	if (user.role === "CANDIDATE") {
+// 		if (payload.companyProfile !== undefined) {
+// 			throw new Error("Candidate cannot update company profile");
+// 		}
+
+// 		if (payload.candidateProfile !== undefined) {
+// 			const cp = payload.candidateProfile;
+
+// 			await prisma.candidateProfile.upsert({
+// 				where: {
+// 					userId: userId,
+// 				},
+
+// 				create: {
+// 					userId: userId,
+// 					bio: cp.bio ?? null,
+// 					phone: cp.phone ?? null,
+// 					location: cp.location ?? null,
+// 					skills: cp.skills ?? [],
+// 					experience: cp.experience ?? null,
+// 					education: cp.education ?? null,
+// 					resumeUrl: cp.resumeUrl ?? null,
+// 					portfolioUrl: cp.portfolioUrl ?? null,
+// 					githubUrl: cp.githubUrl ?? null,
+// 					linkedinUrl: cp.linkedinUrl ?? null,
+// 				},
+
+// 				update: {
+// 					...(cp.bio !== undefined && {
+// 						bio: cp.bio,
+// 					}),
+
+// 					...(cp.phone !== undefined && {
+// 						phone: cp.phone,
+// 					}),
+
+// 					...(cp.location !== undefined && {
+// 						location: cp.location,
+// 					}),
+
+// 					...(cp.skills !== undefined && {
+// 						skills: cp.skills,
+// 					}),
+
+// 					...(cp.experience !== undefined && {
+// 						experience: cp.experience,
+// 					}),
+
+// 					...(cp.education !== undefined && {
+// 						education: cp.education,
+// 					}),
+
+// 					...(cp.resumeUrl !== undefined && {
+// 						resumeUrl: cp.resumeUrl,
+// 					}),
+
+// 					...(cp.portfolioUrl !== undefined && {
+// 						portfolioUrl: cp.portfolioUrl,
+// 					}),
+
+// 					...(cp.githubUrl !== undefined && {
+// 						githubUrl: cp.githubUrl,
+// 					}),
+
+// 					...(cp.linkedinUrl !== undefined && {
+// 						linkedinUrl: cp.linkedinUrl,
+// 					}),
+// 				},
+// 			});
+// 		}
+// 	}
+// 	if (payload.name !== undefined || payload.profilePhoto !== undefined) {
+// 		await prisma.user.update({
+// 			where: {
+// 				id: userId,
+// 			},
+
+// 			data: {
+// 				...(payload.name !== undefined && {
+// 					name: payload.name,
+// 				}),
+
+// 				...(payload.profilePhoto !== undefined && {
+// 					profilePhoto: payload.profilePhoto,
+// 				}),
+// 			},
+// 		});
+// 	}
+
+// 	if (user.role === "COMPANY") {
+// 		if (payload.candidateProfile !== undefined) {
+// 			throw new Error("Company cannot update candidate profile");
+// 		}
+
+// 		if (payload.companyProfile !== undefined) {
+// 			const comp = payload.companyProfile;
+
+// 			await prisma.companyProfile.upsert({
+// 				where: {
+// 					userId: userId,
+// 				},
+
+// 				create: {
+// 					userId: userId,
+
+// 					companyName: comp.companyName ?? "",
+
+// 					description: comp.description ?? null,
+// 					website: comp.website ?? null,
+// 				},
+
+// 				update: {
+// 					...(comp.companyName !== undefined && {
+// 						companyName: comp.companyName,
+// 					}),
+
+// 					...(comp.description !== undefined && {
+// 						description: comp.description,
+// 					}),
+
+// 					...(comp.website !== undefined && {
+// 						website: comp.website,
+// 					}),
+// 				},
+// 			});
+// 		}
+// 	}
+
+// 	return await getMyProfile(userId);
+// };
 const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
-	const user = await prisma.user.findUnique({
-		where: {
-			id: userId,
-		},
-	});
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
 
-	if (!user) {
-		throw new Error("User not found");
-	}
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-	if (payload.name !== undefined || payload.profilePhoto !== undefined) {
-		await prisma.user.update({
-			where: {
-				id: userId,
-			},
+  // ডাটাবেস ট্রানজ্যাকশন ব্যবহার করে ডাটা সিকিউর করা হলো
+  await prisma.$transaction(async (tx) => {
+    // ১. User টেবিল আপডেট (যদি name বা profilePhoto থাকে)
+    if (payload.name !== undefined || payload.profilePhoto !== undefined) {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          ...(payload.name !== undefined && { name: payload.name }),
+          ...(payload.profilePhoto !== undefined && { profilePhoto: payload.profilePhoto }),
+        },
+      });
+    }
 
-			data: {
-				...(payload.name !== undefined && {
-					name: payload.name,
-				}),
+    // ২. CANDIDATE Role হ্যান্ডলিং
+    if (user.role === "CANDIDATE") {
+      if (payload.companyProfile !== undefined) {
+        throw new Error("Candidate cannot update company profile");
+      }
 
-				...(payload.profilePhoto !== undefined && {
-					profilePhoto: payload.profilePhoto,
-				}),
-			},
-		});
-	}
+      if (payload.candidateProfile !== undefined) {
+        const cp = payload.candidateProfile;
 
-	if (user.role === "CANDIDATE") {
-		if (payload.companyProfile !== undefined) {
-			throw new Error("Candidate cannot update company profile");
-		}
+        await tx.candidateProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            bio: cp.bio ?? null,
+            phone: cp.phone ?? null,
+            location: cp.location ?? null,
+            skills: cp.skills ?? [],
+            experience: cp.experience ?? null,
+            education: cp.education ?? null,
+            resumeUrl: cp.resumeUrl ?? null,
+            portfolioUrl: cp.portfolioUrl ?? null,
+            githubUrl: cp.githubUrl ?? null,
+            linkedinUrl: cp.linkedinUrl ?? null,
+          },
+          update: {
+            ...(cp.bio !== undefined && { bio: cp.bio }),
+            ...(cp.phone !== undefined && { phone: cp.phone }),
+            ...(cp.location !== undefined && { location: cp.location }),
+            ...(cp.skills !== undefined && { skills: cp.skills }),
+            ...(cp.experience !== undefined && { experience: cp.experience }),
+            ...(cp.education !== undefined && { education: cp.education }),
+            ...(cp.resumeUrl !== undefined && { resumeUrl: cp.resumeUrl }),
+            ...(cp.portfolioUrl !== undefined && { portfolioUrl: cp.portfolioUrl }),
+            ...(cp.githubUrl !== undefined && { githubUrl: cp.githubUrl }),
+            ...(cp.linkedinUrl !== undefined && { linkedinUrl: cp.linkedinUrl }),
+          },
+        });
+      }
+    }
 
-		if (payload.candidateProfile !== undefined) {
-			const cp = payload.candidateProfile;
+    // ৩. COMPANY Role হ্যান্ডলিং
+    if (user.role === "COMPANY") {
+      if (payload.candidateProfile !== undefined) {
+        throw new Error("Company cannot update candidate profile");
+      }
 
-			await prisma.candidateProfile.upsert({
-				where: {
-					userId: userId,
-				},
+      if (payload.companyProfile !== undefined) {
+        const comp = payload.companyProfile;
 
-				create: {
-					userId: userId,
-					bio: cp.bio ?? null,
-					phone: cp.phone ?? null,
-					location: cp.location ?? null,
-					skills: cp.skills ?? [],
-					experience: cp.experience ?? null,
-					education: cp.education ?? null,
-					resumeUrl: cp.resumeUrl ?? null,
-					portfolioUrl: cp.portfolioUrl ?? null,
-					githubUrl: cp.githubUrl ?? null,
-					linkedinUrl: cp.linkedinUrl ?? null,
-				},
+        await tx.companyProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            companyName: comp.companyName ?? "",
+            description: comp.description ?? null,
+            website: comp.website ?? null,
+          },
+          update: {
+            ...(comp.companyName !== undefined && { companyName: comp.companyName }),
+            ...(comp.description !== undefined && { description: comp.description }),
+            ...(comp.website !== undefined && { website: comp.website }),
+          },
+        });
+      }
+    }
+  });
 
-				update: {
-					...(cp.bio !== undefined && {
-						bio: cp.bio,
-					}),
-
-					...(cp.phone !== undefined && {
-						phone: cp.phone,
-					}),
-
-					...(cp.location !== undefined && {
-						location: cp.location,
-					}),
-
-					...(cp.skills !== undefined && {
-						skills: cp.skills,
-					}),
-
-					...(cp.experience !== undefined && {
-						experience: cp.experience,
-					}),
-
-					...(cp.education !== undefined && {
-						education: cp.education,
-					}),
-
-					...(cp.resumeUrl !== undefined && {
-						resumeUrl: cp.resumeUrl,
-					}),
-
-					...(cp.portfolioUrl !== undefined && {
-						portfolioUrl: cp.portfolioUrl,
-					}),
-
-					...(cp.githubUrl !== undefined && {
-						githubUrl: cp.githubUrl,
-					}),
-
-					...(cp.linkedinUrl !== undefined && {
-						linkedinUrl: cp.linkedinUrl,
-					}),
-				},
-			});
-		}
-	}
-	if (payload.name !== undefined || payload.profilePhoto !== undefined) {
-		await prisma.user.update({
-			where: {
-				id: userId,
-			},
-
-			data: {
-				...(payload.name !== undefined && {
-					name: payload.name,
-				}),
-
-				...(payload.profilePhoto !== undefined && {
-					profilePhoto: payload.profilePhoto,
-				}),
-			},
-		});
-	}
-
-	if (user.role === "COMPANY") {
-		if (payload.candidateProfile !== undefined) {
-			throw new Error("Company cannot update candidate profile");
-		}
-
-		if (payload.companyProfile !== undefined) {
-			const comp = payload.companyProfile;
-
-			await prisma.companyProfile.upsert({
-				where: {
-					userId: userId,
-				},
-
-				create: {
-					userId: userId,
-
-					companyName: comp.companyName ?? "",
-
-					description: comp.description ?? null,
-					website: comp.website ?? null,
-				},
-
-				update: {
-					...(comp.companyName !== undefined && {
-						companyName: comp.companyName,
-					}),
-
-					...(comp.description !== undefined && {
-						description: comp.description,
-					}),
-
-					...(comp.website !== undefined && {
-						website: comp.website,
-					}),
-				},
-			});
-		}
-	}
-
-	return await getMyProfile(userId);
+  return await getMyProfile(userId);
 };
-
 export const UserService = {
 	getMyProfile,
 	updateMyProfile,

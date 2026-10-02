@@ -16,11 +16,12 @@ import { AttemptRoutes } from "./app/module/attempt/attempt.route.ts";
 import { AnswerRoutes } from "./app/module/answer/answer.route.ts";
 import { AdminRoutes } from "./app/module/admin/admin.route.ts";
 import { PaymentRoutes } from "./app/module/payment/payment.route.ts";
+import config from "./app/config/index.ts";
 
 const app: Application = express();
 app.use(
   cors({
-    origin: true,
+    origin: config.app_url,
     credentials: true,
   }),
 );
