@@ -72,6 +72,20 @@ const addQuestionToAssessmentDB = catchAsync(
     });
   },
 );
+
+const getAssessmentQuestions = async (req: Request, res: Response) => {
+  const { assessmentId } = req.params;
+
+  const result = await AssessmentService.getAssessmentQuestions(
+    assessmentId as string,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Assessment questions retrieved successfully",
+    data: result,
+  });
+};
 const publishAssessment = catchAsync(async (req: Request, res: Response) => {
   const userId = req.data?.id as string;
   const { assessmentId } = req.params;
@@ -184,6 +198,7 @@ export const AssessmentController = {
   createAssessmentDB,
   deleteAssessment,
   addQuestionToAssessmentDB,
+  getAssessmentQuestions,
   publishAssessment,
   inviteCandidate,
   searchAssessments,

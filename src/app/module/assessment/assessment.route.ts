@@ -28,6 +28,12 @@ router.post(
   AssessmentController.addQuestionToAssessmentDB,
 );
 
+router.get(
+  "/questions/:assessmentId",
+  auth(Role.COMPANY),
+  AssessmentController.getAssessmentQuestions,
+);
+
 router.patch(
   "/publish/:assessmentId",
   auth(Role.COMPANY),

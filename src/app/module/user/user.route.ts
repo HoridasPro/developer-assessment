@@ -8,17 +8,23 @@ import { Role } from "../../../../generated/prisma/enums";
 const router = Router();
 
 router.get(
-	"/me",
-	auth(Role.CANDIDATE, Role.COMPANY),
-	UserController.getMyProfileDB,
+  "/me",
+  auth(Role.CANDIDATE, Role.COMPANY),
+  UserController.getMyProfileDB,
 );
 
 router.patch(
-	"/me",
-	// validateRequest(UserValidation.updateCandidateProfileValidationSchema),
-	// validateRequest(UserValidation.updateCompanyProfileValidationSchema),
-	auth(Role.CANDIDATE, Role.COMPANY),
-	UserController.updateMyProfileDB,
+  "/me",
+  // validateRequest(UserValidation.updateCandidateProfileValidationSchema),
+  // validateRequest(UserValidation.updateCompanyProfileValidationSchema),
+  auth(Role.CANDIDATE, Role.COMPANY),
+  UserController.updateMyProfileDB,
+);
+
+router.get(
+  "/candidates",
+  auth(Role.CANDIDATE, Role.COMPANY),
+  UserController.getCandidates,
 );
 
 export const UserRoutes = router;

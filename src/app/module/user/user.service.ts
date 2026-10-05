@@ -2,46 +2,46 @@ import { prisma } from "../../lib/prisma";
 import type { IUpdateMyProfile } from "./user.interface";
 
 const getMyProfile = async (userId: string) => {
-	const user = await prisma.user.findUnique({
-		where: {
-			id: userId,
-		},
-		omit: {
-			password: true,
-		},
-	});
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    omit: {
+      password: true,
+    },
+  });
 
-	if (!user) {
-		throw new Error("User not found");
-	}
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-	if (user.role === "CANDIDATE") {
-		const candidateProfile = await prisma.candidateProfile.findUnique({
-			where: {
-				userId: userId,
-			},
-		});
+  if (user.role === "CANDIDATE") {
+    const candidateProfile = await prisma.candidateProfile.findUnique({
+      where: {
+        userId: userId,
+      },
+    });
 
-		return {
-			...user,
-			candidateProfile,
-		};
-	}
+    return {
+      ...user,
+      candidateProfile,
+    };
+  }
 
-	if (user.role === "COMPANY") {
-		const companyProfile = await prisma.companyProfile.findUnique({
-			where: {
-				userId: userId,
-			},
-		});
+  if (user.role === "COMPANY") {
+    const companyProfile = await prisma.companyProfile.findUnique({
+      where: {
+        userId: userId,
+      },
+    });
 
-		return {
-			...user,
-			companyProfile,
-		};
-	}
+    return {
+      ...user,
+      companyProfile,
+    };
+  }
 
-	throw new Error("Invalid user role");
+  throw new Error("Invalid user role");
 };
 
 // const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
@@ -220,7 +220,9 @@ const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
         where: { id: userId },
         data: {
           ...(payload.name !== undefined && { name: payload.name }),
-          ...(payload.profilePhoto !== undefined && { profilePhoto: payload.profilePhoto }),
+          ...(payload.profilePhoto !== undefined && {
+            profilePhoto: payload.profilePhoto,
+          }),
         },
       });
     }
@@ -257,9 +259,13 @@ const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
             ...(cp.experience !== undefined && { experience: cp.experience }),
             ...(cp.education !== undefined && { education: cp.education }),
             ...(cp.resumeUrl !== undefined && { resumeUrl: cp.resumeUrl }),
-            ...(cp.portfolioUrl !== undefined && { portfolioUrl: cp.portfolioUrl }),
+            ...(cp.portfolioUrl !== undefined && {
+              portfolioUrl: cp.portfolioUrl,
+            }),
             ...(cp.githubUrl !== undefined && { githubUrl: cp.githubUrl }),
-            ...(cp.linkedinUrl !== undefined && { linkedinUrl: cp.linkedinUrl }),
+            ...(cp.linkedinUrl !== undefined && {
+              linkedinUrl: cp.linkedinUrl,
+            }),
           },
         });
       }
@@ -283,8 +289,12 @@ const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
             website: comp.website ?? null,
           },
           update: {
-            ...(comp.companyName !== undefined && { companyName: comp.companyName }),
-            ...(comp.description !== undefined && { description: comp.description }),
+            ...(comp.companyName !== undefined && {
+              companyName: comp.companyName,
+            }),
+            ...(comp.description !== undefined && {
+              description: comp.description,
+            }),
             ...(comp.website !== undefined && { website: comp.website }),
           },
         });
@@ -294,7 +304,45 @@ const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
 
   return await getMyProfile(userId);
 };
+
+const getCandidates = async () => {
+  const candidates = await prisma.user.findMany({
+    where: {
+      role: "CANDIDATE",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      profilePhoto: true,
+      role: true,
+
+      candidateProfile: {
+        select: {
+          bio: true,
+          phone: true,
+          location: true,
+          skills: true,
+          experience: true,
+          education: true,
+          resumeUrl: true,
+          portfolioUrl: true,
+          githubUrl: true,
+          linkedinUrl: true,
+        },
+      },
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return candidates;
+};
+
 export const UserService = {
-	getMyProfile,
-	updateMyProfile,
+  getMyProfile,
+  updateMyProfile,
+  getCandidates,
 };
