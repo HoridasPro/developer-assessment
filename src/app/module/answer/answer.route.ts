@@ -9,8 +9,8 @@ const router = Router();
 
 router.post(
   "/questions/answer/:attemptId",
-  validateRequest(AnswerValidation.submitAnswersValidationSchema),
   auth(Role.CANDIDATE),
+  validateRequest(AnswerValidation.submitAnswerValidationSchema),
   AnswerController.saveAnswer,
 );
 

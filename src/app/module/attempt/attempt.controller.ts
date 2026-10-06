@@ -121,6 +121,46 @@ const getAllMyAssessmentResults = catchAsync(
 	},
 );
 
+
+
+
+
+const getAttemptDetailsForCompany = catchAsync(
+  async (req: Request, res: Response) => {
+    const companyId = req.data?.id as string;
+
+    const { attemptId } = req.params;
+
+    const result =
+      await AttemptServices.getAttemptDetailsForCompany(
+        companyId,
+        attemptId as string,
+      );
+
+    sendResponse(res, {
+      success: true,
+      message: "Attempt details fetched successfully",
+      data: result,
+    });
+  },
+);
+
+
+
+const getCompanyAttempts = catchAsync(
+  async (req: Request, res: Response) => {
+    const companyId = req.data?.id as string;
+
+    const result =
+      await AttemptServices.getCompanyAttempts(companyId);
+
+    sendResponse(res, {
+      success: true,
+      message: "Company attempts fetched successfully",
+      data: result,
+    });
+  },
+);
 export const AttemptController = {
 	getAttemptQuestions,
 	cancelAttempt,
@@ -128,4 +168,6 @@ export const AttemptController = {
 	evaluateAttempt,
 	getAttemptResult,
 	getAllMyAssessmentResults,
+	getAttemptDetailsForCompany,
+	getCompanyAttempts
 };

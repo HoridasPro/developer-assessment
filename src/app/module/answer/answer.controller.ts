@@ -7,7 +7,7 @@ const saveAnswer = catchAsync(async (req: Request, res: Response) => {
 	const userId = req.data?.id as string;
 	const { attemptId } = req.params;
 
-	const result = await AnswerServices.saveAnswers(
+	const result = await AnswerServices.saveAnswer(
 		userId,
 		attemptId as string,
 		req.body,

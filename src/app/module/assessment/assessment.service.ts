@@ -359,7 +359,7 @@ const inviteCandidate = async (
   }
 
   if (assessment.status !== "PUBLISHED") {
-    throw new Error("Only published assessment can be sent to candidates");
+    throw new Error("First payment then auto published assessment can be sent to candidates");
   }
 
   const candidate = await prisma.user.findUnique({

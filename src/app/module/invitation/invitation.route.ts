@@ -8,28 +8,28 @@ import { InvitationValidation } from "./invitation.validation";
 const router = Router();
 
 router.get(
-	"/my-assigned",
-	auth(Role.CANDIDATE),
-	InvitationController.getMyInvitations,
+  "/my-assigned",
+  auth(Role.CANDIDATE),
+  InvitationController.getMyInvitations,
 );
 
 router.post(
-	"/:invitationId",
-	auth(Role.CANDIDATE),
-	InvitationController.cancelInvitation,
+  "/:invitationId",
+  auth(Role.CANDIDATE),
+  InvitationController.cancelInvitation,
 );
 
 router.patch(
-	"/status/:invitationId",
-	validateRequest(InvitationValidation.statusValidationSchema),
-	auth(Role.CANDIDATE),
-	InvitationController.acceptInvitation,
+  "/status/:invitationId",
+  validateRequest(InvitationValidation.statusValidationSchema),
+  auth(Role.CANDIDATE),
+  InvitationController.acceptInvitation,
 );
 
 router.post(
-	"/start/:assessmentId",
-	auth(Role.CANDIDATE),
-	InvitationController.startAssessment,
+  "/start/:assessmentId",
+  auth(Role.CANDIDATE),
+  InvitationController.startAssessment,
 );
 
 export const InvitationRoutes = router;

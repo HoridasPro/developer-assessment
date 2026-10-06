@@ -180,7 +180,7 @@ const initiatePayment = async (userId: string, assessmentId: string) => {
 
     success_url: `${config.app_url}/dashboard/company/assessments/${assessmentId}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
 
-    cancel_url: `${config.app_url}/dashboard/company/assessments/${assessmentId}/payment`,
+    cancel_url: `${config.app_url}/dashboard/company/assessments/${assessmentId}/payment/cancel`,
   });
 
   await prisma.payment.update({
