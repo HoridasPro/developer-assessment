@@ -60,6 +60,12 @@ router.get(
 );
 
 router.get(
+  "/assessments/archived",
+  auth(Role.COMPANY),
+  AssessmentController.getArchivedAssessments,
+);
+
+router.get(
   "/assessments/:assessmentId",
   auth(Role.COMPANY),
   AssessmentController.getAssessmentById,

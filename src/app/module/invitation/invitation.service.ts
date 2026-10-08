@@ -183,7 +183,10 @@ const cancelInvitation = async (invitationId: string, userId: string) => {
 //   return updatedInvitation;
 // };
 
-const acceptInvitation = async (userId: string, invitationId: string) => {
+export const acceptInvitation = async (
+  userId: string,
+  invitationId: string,
+) => {
   const invitation = await prisma.assessmentInvitation.findUnique({
     where: {
       id: invitationId,
@@ -211,13 +214,12 @@ const acceptInvitation = async (userId: string, invitationId: string) => {
 
   const now = new Date();
 
-  // ❌ startAt check এখানে থাকবে না
+  if (invitation.assessment.startAt && now < invitation.assessment.startAt) {
+    throw new Error("Assessment has not started yet");
+  }
 
-  // চাইলে endAt check রাখতে পারো
-  if (invitation.assessment.endAt) {
-    if (now > invitation.assessment.endAt) {
-      throw new Error("Assessment deadline has passed");
-    }
+  if (invitation.assessment.endAt && now > invitation.assessment.endAt) {
+    throw new Error("Assessment deadline has passed");
   }
 
   const updatedInvitation = await prisma.assessmentInvitation.update({
@@ -236,57 +238,39 @@ const acceptInvitation = async (userId: string, invitationId: string) => {
   return updatedInvitation;
 };
 
-const startAssessment = async (userId: string, invitationId: string) => {
+export const startAssessment = async (userId: string, invitationId: string) => {
   const invitation = await prisma.assessmentInvitation.findUnique({
-    where: {
-      id: invitationId,
-    },
+    where: { id: invitationId },
   });
 
-  if (!invitation) {
-    throw new Error("Invitation not found");
-  }
-
-  if (invitation.candidateUserId !== userId) {
+  if (!invitation) throw new Error("Invitation not found");
+  if (invitation.candidateUserId !== userId)
     throw new Error("You are not invited to this assessment");
-  }
-
-  if (invitation.status !== "ACCEPTED") {
+  if (invitation.status !== "ACCEPTED")
     throw new Error("You must accept the invitation first");
-  }
 
   const assessment = await prisma.assessment.findUnique({
-    where: {
-      id: invitation.assessmentId,
-    },
+    where: { id: invitation.assessmentId },
   });
 
-  if (!assessment) {
-    throw new Error("Assessment not found");
-  }
+  if (!assessment) throw new Error("Assessment not found");
 
-  if (assessment.status !== "PUBLISHED") {
+  console.log("========== START ASSESSMENT DEBUG ==========");
+  console.log("Candidate ID:", userId);
+  console.log("Invitation ID:", invitationId);
+  console.log("Assessment ID:", assessment.id);
+  console.log("Assessment Company ID:", assessment.companyId);
+  console.log("=============================================");
+
+  if (assessment.status !== "PUBLISHED")
     throw new Error("Assessment is not published");
-  }
-
-  const now = new Date();
-
-  if (assessment.startAt && now < assessment.startAt) {
-    throw new Error("Assessment has not started yet");
-  }
-
-  if (assessment.endAt && now > assessment.endAt) {
-    throw new Error("Assessment deadline has passed");
-  }
 
   const attempts = await prisma.assessmentAttempt.findMany({
     where: {
       assessmentId: invitation.assessmentId,
       candidateId: userId,
     },
-    orderBy: {
-      attemptNumber: "desc",
-    },
+    orderBy: { attemptNumber: "desc" },
   });
 
   if (attempts.length >= assessment.maxAttempts) {
@@ -296,18 +280,14 @@ const startAssessment = async (userId: string, invitationId: string) => {
   const activeAttempt = attempts.find(
     (attempt) => attempt.status === "IN_PROGRESS",
   );
-
-  if (activeAttempt) {
-    return activeAttempt;
-  }
+  if (activeAttempt) return activeAttempt;
 
   const startedAt = new Date();
   const durationMs = assessment.duration * 60 * 1000;
   const expiresAt = new Date(startedAt.getTime() + durationMs);
-
   const attemptNumber = attempts.length + 1;
 
-  const attempt = await prisma.assessmentAttempt.create({
+  return await prisma.assessmentAttempt.create({
     data: {
       assessmentId: invitation.assessmentId,
       candidateId: userId,
@@ -317,13 +297,98 @@ const startAssessment = async (userId: string, invitationId: string) => {
       startedAt,
       expiresAt,
     },
-    include: {
-      assessment: true,
-    },
+    include: { assessment: true },
   });
-
-  return attempt;
 };
+
+// const startAssessment = async (userId: string, invitationId: string) => {
+//   const invitation = await prisma.assessmentInvitation.findUnique({
+//     where: {
+//       id: invitationId,
+//     },
+//   });
+
+//   if (!invitation) {
+//     throw new Error("Invitation not found");
+//   }
+
+//   if (invitation.candidateUserId !== userId) {
+//     throw new Error("You are not invited to this assessment");
+//   }
+
+//   if (invitation.status !== "ACCEPTED") {
+//     throw new Error("You must accept the invitation first");
+//   }
+
+//   const assessment = await prisma.assessment.findUnique({
+//     where: {
+//       id: invitation.assessmentId,
+//     },
+//   });
+
+//   if (!assessment) {
+//     throw new Error("Assessment not found");
+//   }
+
+//   if (assessment.status !== "PUBLISHED") {
+//     throw new Error("Assessment is not published");
+//   }
+
+//   const now = new Date();
+
+//   if (assessment.startAt && now < assessment.startAt) {
+//     throw new Error("Assessment has not started yet");
+//   }
+
+//   if (assessment.endAt && now > assessment.endAt) {
+//     throw new Error("Assessment deadline has passed");
+//   }
+
+//   const attempts = await prisma.assessmentAttempt.findMany({
+//     where: {
+//       assessmentId: invitation.assessmentId,
+//       candidateId: userId,
+//     },
+//     orderBy: {
+//       attemptNumber: "desc",
+//     },
+//   });
+
+//   if (attempts.length >= assessment.maxAttempts) {
+//     throw new Error("You have reached the maximum number of attempts");
+//   }
+
+//   const activeAttempt = attempts.find(
+//     (attempt) => attempt.status === "IN_PROGRESS",
+//   );
+
+//   if (activeAttempt) {
+//     return activeAttempt;
+//   }
+
+//   const startedAt = new Date();
+//   const durationMs = assessment.duration * 60 * 1000;
+//   const expiresAt = new Date(startedAt.getTime() + durationMs);
+
+//   const attemptNumber = attempts.length + 1;
+
+//   const attempt = await prisma.assessmentAttempt.create({
+//     data: {
+//       assessmentId: invitation.assessmentId,
+//       candidateId: userId,
+//       companyId: assessment.companyId,
+//       attemptNumber,
+//       status: "IN_PROGRESS",
+//       startedAt,
+//       expiresAt,
+//     },
+//     include: {
+//       assessment: true,
+//     },
+//   });
+
+//   return attempt;
+// };
 
 const expireAttempts = async () => {
   try {

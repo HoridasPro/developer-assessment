@@ -127,18 +127,28 @@ const submitAttempt = async (attemptId: string, candidateId: string) => {
   if (attempt.status !== "IN_PROGRESS") {
     throw new Error("Assessment attempt is no longer active");
   }
-
   let mcqScore = 0;
 
   for (const answer of attempt.answers) {
-    if (answer.question.type === "MCQ" && answer.selectedOptionId) {
+    if (answer.question.type === "MCQ") {
       const selectedOption = answer.question.options.find(
         (option) => option.id === answer.selectedOptionId,
       );
 
-      if (selectedOption?.isCorrect) {
-        mcqScore += answer.question.marks;
-      }
+      const obtainedMarks = selectedOption?.isCorrect
+        ? answer.question.marks
+        : 0;
+
+      await prisma.assessmentAnswer.update({
+        where: {
+          id: answer.id,
+        },
+        data: {
+          obtainedMarks,
+        },
+      });
+
+      mcqScore += obtainedMarks;
     }
   }
 
@@ -146,7 +156,6 @@ const submitAttempt = async (attemptId: string, candidateId: string) => {
     where: {
       id: attemptId,
     },
-
     data: {
       status: "SUBMITTED",
       submittedAt: new Date(),
@@ -156,8 +165,11 @@ const submitAttempt = async (attemptId: string, candidateId: string) => {
 
   return {
     attemptId: submittedAttempt.id,
+
     assessmentId: submittedAttempt.assessmentId,
-    candidateId: submittedAttempt.companyId,
+
+    candidateId: submittedAttempt.candidateId,
+
     attemptNumber: submittedAttempt.attemptNumber,
 
     status: submittedAttempt.status,
@@ -173,7 +185,23 @@ const submitAttempt = async (attemptId: string, candidateId: string) => {
   };
 };
 
-const evaluateAttempt = async (attemptId: string, companyId: string) => {
+const evaluateAttempt = async (
+  attemptId: string,
+  companyUserId: string,
+  answers: {
+    questionId: string;
+    marks: number;
+    type: "WRITTEN" | "CODING";
+  }[],
+) => {
+  if (!Array.isArray(answers)) {
+    throw new Error("Answers must be an array");
+  }
+
+  // ==========================================
+  // 1. Get Attempt
+  // ==========================================
+
   const attempt = await prisma.assessmentAttempt.findUnique({
     where: {
       id: attemptId,
@@ -197,9 +225,13 @@ const evaluateAttempt = async (attemptId: string, companyId: string) => {
     throw new Error("Assessment attempt not found");
   }
 
+  // ==========================================
+  // 2. Find Company Profile
+  // ==========================================
+
   const company = await prisma.companyProfile.findUnique({
     where: {
-      userId: companyId,
+      userId: companyUserId,
     },
   });
 
@@ -207,15 +239,123 @@ const evaluateAttempt = async (attemptId: string, companyId: string) => {
     throw new Error("Company profile not found");
   }
 
+  // ==========================================
+  // 3. Check Company Ownership
+  // ==========================================
+
   if (attempt.assessment.companyId !== company.id) {
     throw new Error("You are not allowed to evaluate this attempt");
   }
+
+  // ==========================================
+  // 4. Check Attempt Status
+  // ==========================================
 
   if (attempt.status !== "SUBMITTED") {
     throw new Error("Assessment attempt must be submitted first");
   }
 
-  const manualAnswers = attempt.answers.filter(
+  // ==========================================
+  // 5. Validate Manual Evaluation
+  // ==========================================
+
+  for (const evaluation of answers) {
+    const answer = attempt.answers.find(
+      (item) => item.questionId === evaluation.questionId,
+    );
+
+    if (!answer) {
+      throw new Error(`Question answer not found: ${evaluation.questionId}`);
+    }
+
+    // Only WRITTEN/CODING can be manually evaluated
+    if (
+      answer.question.type !== "WRITTEN" &&
+      answer.question.type !== "CODING"
+    ) {
+      throw new Error(
+        `Question ${evaluation.questionId} does not require manual evaluation`,
+      );
+    }
+
+    // Check type
+    if (answer.question.type !== evaluation.type) {
+      throw new Error(
+        `Invalid question type for question ${evaluation.questionId}`,
+      );
+    }
+
+    // Check negative marks
+    if (evaluation.marks < 0) {
+      throw new Error("Marks cannot be negative");
+    }
+
+    // Check maximum marks
+    if (evaluation.marks > answer.question.marks) {
+      throw new Error(
+        `Marks cannot be greater than ${answer.question.marks} for "${answer.question.title}"`,
+      );
+    }
+  }
+
+  // ==========================================
+  // 6. Update Written/Coding Answers
+  // ==========================================
+
+  await prisma.$transaction(async (tx) => {
+    for (const evaluation of answers) {
+      const answer = attempt.answers.find(
+        (item) => item.questionId === evaluation.questionId,
+      );
+
+      if (!answer) {
+        throw new Error("Answer not found");
+      }
+
+      await tx.assessmentAnswer.update({
+        where: {
+          id: answer.id,
+        },
+        data: {
+          obtainedMarks: evaluation.marks,
+          evaluated: true,
+        },
+      });
+    }
+  });
+
+  // ==========================================
+  // 7. Get Updated Attempt
+  // ==========================================
+
+  const updatedAttempt = await prisma.assessmentAttempt.findUnique({
+    where: {
+      id: attemptId,
+    },
+    include: {
+      answers: {
+        include: {
+          question: {
+            include: {
+              options: true,
+            },
+          },
+          selectedOption: true,
+        },
+      },
+      assessment: true,
+    },
+  });
+
+  if (!updatedAttempt) {
+    throw new Error("Assessment attempt not found");
+  }
+
+  // ==========================================
+  // 8. Check Manual Answers
+  // ==========================================
+
+  const manualAnswers = updatedAttempt.answers.filter(
     (answer) =>
       answer.question.type === "WRITTEN" || answer.question.type === "CODING",
   );
@@ -230,6 +370,10 @@ const evaluateAttempt = async (attemptId: string, companyId: string) => {
     );
   }
 
+  // ==========================================
+  // 9. Calculate Score
+  // ==========================================
+
   let obtainedMarks = 0;
 
   let mcqObtainedMarks = 0;
@@ -240,7 +384,11 @@ const evaluateAttempt = async (attemptId: string, companyId: string) => {
   let writtenTotalMarks = 0;
   let codingTotalMarks = 0;
 
-  for (const answer of attempt.answers) {
+  for (const answer of updatedAttempt.answers) {
+    // ------------------------------------------
+    // MCQ
+    // ------------------------------------------
+
     if (answer.question.type === "MCQ") {
       mcqTotalMarks += answer.question.marks;
 
@@ -251,43 +399,77 @@ const evaluateAttempt = async (attemptId: string, companyId: string) => {
 
         if (selectedOption?.isCorrect) {
           mcqObtainedMarks += answer.question.marks;
+
           obtainedMarks += answer.question.marks;
         }
       }
     }
 
+    // ------------------------------------------
+    // WRITTEN
+    // ------------------------------------------
+
     if (answer.question.type === "WRITTEN") {
       writtenTotalMarks += answer.question.marks;
 
-      if (answer.evaluated) {
-        const marks = answer.obtainedMarks ?? 0;
+      const marks = answer.obtainedMarks ?? 0;
 
-        writtenObtainedMarks += marks;
-        obtainedMarks += marks;
-      }
+      writtenObtainedMarks += marks;
+      obtainedMarks += marks;
     }
+
+    // ------------------------------------------
+    // CODING
+    // ------------------------------------------
 
     if (answer.question.type === "CODING") {
       codingTotalMarks += answer.question.marks;
 
-      if (answer.evaluated) {
-        const marks = answer.obtainedMarks ?? 0;
+      const marks = answer.obtainedMarks ?? 0;
 
-        codingObtainedMarks += marks;
-        obtainedMarks += marks;
-      }
+      codingObtainedMarks += marks;
+      obtainedMarks += marks;
     }
   }
 
+  // ==========================================
+  // 10. Total Marks
+  // ==========================================
+
   const totalMarks = mcqTotalMarks + writtenTotalMarks + codingTotalMarks;
+
+  // ==========================================
+  // 11. Percentage
+  // ==========================================
 
   const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
 
-  const passingScore = attempt.assessment.passingScore ?? 40;
+  // ==========================================
+  // 12. Passing Score
+  // ==========================================
+
+  const passingScore = updatedAttempt.assessment.passingScore ?? 40;
 
   const passed = percentage >= passingScore;
 
-  const updatedAttempt = await prisma.assessmentAttempt.update({
+  // ==========================================
+  // 13. VERY IMPORTANT
+  // Update Attempt -> COMPLETED
+  // ==========================================
+
+  // const finalAttempt = await prisma.assessmentAttempt.update({
+  //   where: {
+  //     id: attemptId,
+  //   },
+
+  //   data: {
+  //     score: obtainedMarks,
+  //     passed: passed,
+  //     status: "COMPLETED",
+  //   },
+  // });
+
+  const finalAttempt = await prisma.assessmentAttempt.update({
     where: {
       id: attemptId,
     },
@@ -298,16 +480,44 @@ const evaluateAttempt = async (attemptId: string, companyId: string) => {
     },
   });
 
+  console.log("2. Update successful:", finalAttempt);
+
+  console.log("=================================");
+  console.log("EVALUATE ATTEMPT UPDATE");
+  console.log("Attempt ID:", attemptId);
+  console.log("Obtained Marks:", obtainedMarks);
+  console.log("Passed:", passed);
+  console.log("Final Attempt:", finalAttempt);
+  console.log("Final Status:", finalAttempt.status);
+  console.log("=================================");
+
+  // ==========================================
+  // 14. Debug
+  // ==========================================
+
+  console.log("FINAL ATTEMPT AFTER EVALUATION:", finalAttempt);
+
+  // ==========================================
+  // 15. Return
+  // ==========================================
+
   return {
-    attemptId: updatedAttempt.id,
-    assessmentId: updatedAttempt.assessmentId,
-    companyId: updatedAttempt.companyId,
-    attemptNumber: updatedAttempt.attemptNumber,
-    status: updatedAttempt.status,
+    attemptId: finalAttempt.id,
+
+    assessmentId: finalAttempt.assessmentId,
+
+    companyId: finalAttempt.companyId,
+
+    attemptNumber: finalAttempt.attemptNumber,
+
+    status: finalAttempt.status,
 
     totalMarks,
+
     obtainedMarks,
+
     percentage: Number(percentage.toFixed(2)),
+
     passed,
 
     breakdown: {
@@ -329,143 +539,252 @@ const evaluateAttempt = async (attemptId: string, companyId: string) => {
   };
 };
 
-const getAttemptResult = async (attemptId: string, candidateId: string) => {
+const getAttemptResult = async (candidateUserId: string, attemptId: string) => {
+  // =========================================
+  // Find Candidate
+  // =========================================
+
+  const candidate = await prisma.user.findUnique({
+    where: {
+      id: candidateUserId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  if (!candidate) {
+    throw new Error("Candidate not found");
+  }
+
+  // =========================================
+  // Find Attempt
+  // =========================================
+
   const attempt = await prisma.assessmentAttempt.findUnique({
     where: {
       id: attemptId,
     },
 
     include: {
-      assessment: true,
+      // =====================================
+      // Assessment Information
+      // =====================================
+
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          duration: true,
+          passingScore: true,
+        },
+      },
+
+      // =====================================
+      // Candidate Information
+      // =====================================
+
+      candidate: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+
+      // =====================================
+      // Answers
+      // =====================================
 
       answers: {
         include: {
+          // =================================
+          // Question Information
+          // =================================
+
           question: {
-            include: {
-              options: true,
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              type: true,
+              category: true,
+              difficulty: true,
+              marks: true,
+
+              // =============================
+              // MCQ Options
+              // =============================
+
+              options: {
+                select: {
+                  id: true,
+                  text: true,
+                  isCorrect: true,
+                },
+              },
             },
           },
 
-          selectedOption: true,
+          // =================================
+          // Selected Option
+          // =================================
+
+          selectedOption: {
+            select: {
+              id: true,
+              text: true,
+            },
+          },
         },
       },
     },
   });
 
+  // =========================================
+  // Attempt Not Found
+  // =========================================
+
   if (!attempt) {
     throw new Error("Assessment attempt not found");
   }
 
-  if (attempt.candidateId !== candidateId) {
+  // =========================================
+  // Candidate Ownership Check
+  // =========================================
+
+  if (attempt.candidateId !== candidateUserId) {
     throw new Error("You are not allowed to view this result");
   }
 
+  // =========================================
+  // Only COMPLETED Result Can Be Viewed
+  // =========================================
+
   if (attempt.status !== "COMPLETED") {
-    throw new Error("Assessment has not been completed yet");
+    throw new Error("Assessment result is not available yet");
   }
 
-  let mcqTotalMarks = 0;
-  let mcqObtainedMarks = 0;
-
-  let writtenTotalMarks = 0;
-  let writtenObtainedMarks = 0;
-
-  let codingTotalMarks = 0;
-  let codingObtainedMarks = 0;
-
-  for (const answer of attempt.answers) {
-    if (answer.question.type === "MCQ") {
-      mcqTotalMarks += answer.question.marks;
-
-      if (answer.selectedOption?.isCorrect) {
-        mcqObtainedMarks += answer.question.marks;
-      }
-    }
-
-    if (answer.question.type === "WRITTEN") {
-      writtenTotalMarks += answer.question.marks;
-
-      if (answer.evaluated) {
-        writtenObtainedMarks += answer.obtainedMarks ?? 0;
-      }
-    }
-
-    if (answer.question.type === "CODING") {
-      codingTotalMarks += answer.question.marks;
-
-      if (answer.evaluated) {
-        codingObtainedMarks += answer.obtainedMarks ?? 0;
-      }
-    }
-  }
-
-  const totalMarks = mcqTotalMarks + writtenTotalMarks + codingTotalMarks;
-
-  const obtainedMarks =
-    mcqObtainedMarks + writtenObtainedMarks + codingObtainedMarks;
-
-  const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+  // =========================================
+  // Return Complete Result
+  // =========================================
 
   return {
-    attemptId: attempt.id,
+    id: attempt.id,
 
-    assessmentId: attempt.assessmentId,
+    // -----------------------------------------
+    // Assessment
+    // -----------------------------------------
 
-    candidateId: attempt.candidateId,
+    assessment: {
+      id: attempt.assessment.id,
+      title: attempt.assessment.title,
+      description: attempt.assessment.description,
+      duration: attempt.assessment.duration,
+      passingScore: attempt.assessment.passingScore,
+    },
+
+    // -----------------------------------------
+    // Candidate
+    // -----------------------------------------
+
+    candidate: {
+      id: attempt.candidate.id,
+      name: attempt.candidate.name,
+      email: attempt.candidate.email,
+    },
+
+    // -----------------------------------------
+    // Attempt Information
+    // -----------------------------------------
 
     attemptNumber: attempt.attemptNumber,
 
     status: attempt.status,
 
-    totalMarks,
-
-    obtainedMarks,
-
-    percentage: Number(percentage.toFixed(2)),
-
-    passed: attempt.passed,
-
     startedAt: attempt.startedAt,
 
     submittedAt: attempt.submittedAt,
 
-    breakdown: {
-      mcq: {
-        totalMarks: mcqTotalMarks,
-        obtainedMarks: mcqObtainedMarks,
-      },
+    expiresAt: attempt.expiresAt,
 
-      written: {
-        totalMarks: writtenTotalMarks,
-        obtainedMarks: writtenObtainedMarks,
-      },
+    // -----------------------------------------
+    // Final Result
+    // -----------------------------------------
 
-      coding: {
-        totalMarks: codingTotalMarks,
-        obtainedMarks: codingObtainedMarks,
-      },
-    },
+    score: attempt.score,
+
+    passed: attempt.passed,
+
+    // -----------------------------------------
+    // Question-wise Result
+    // -----------------------------------------
 
     answers: attempt.answers.map((answer) => ({
-      questionId: answer.question.id,
+      id: answer.id,
 
-      question: answer.question.title,
+      questionId: answer.questionId,
 
-      type: answer.question.type,
+      // ===============================
+      // Question
+      // ===============================
 
-      marks: answer.question.marks,
+      question: {
+        id: answer.question.id,
 
-      obtainedMarks: answer.obtainedMarks,
+        title: answer.question.title,
 
-      evaluated: answer.evaluated,
+        description: answer.question.description,
+
+        type: answer.question.type,
+
+        category: answer.question.category,
+
+        difficulty: answer.question.difficulty,
+
+        marks: answer.question.marks,
+
+        // =============================
+        // Options
+        // =============================
+
+        options: answer.question.options.map((option) => ({
+          id: option.id,
+          text: option.text,
+
+          // Candidate result page
+          // এটার দরকার নেই, তাই
+          // correct answer expose
+          // না করাই ভালো
+        })),
+      },
+
+      // ===============================
+      // Candidate Answer
+      // ===============================
 
       selectedOptionId: answer.selectedOptionId,
 
-      selectedOption: answer.selectedOption?.text ?? null,
+      selectedOption: answer.selectedOption
+        ? {
+            id: answer.selectedOption.id,
+
+            text: answer.selectedOption.text,
+          }
+        : null,
 
       writtenAnswer: answer.writtenAnswer,
 
       codeAnswer: answer.codeAnswer,
+
+      // ===============================
+      // Obtained Marks
+      // ===============================
+
+      obtainedMarks: answer.obtainedMarks,
     })),
   };
 };
@@ -524,14 +843,12 @@ const getAllMyAssessmentResults = async (candidateId: string) => {
   });
 };
 
-const getAttemptDetailsForCompany = async (
+export const getAttemptDetailsForCompany = async (
   companyId: string,
   attemptId: string,
 ) => {
   const attempt = await prisma.assessmentAttempt.findUnique({
-    where: {
-      id: attemptId,
-    },
+    where: { id: attemptId },
     include: {
       assessment: {
         select: {
@@ -540,16 +857,15 @@ const getAttemptDetailsForCompany = async (
           description: true,
           passingScore: true,
           duration: true,
+          companyId: true,
         },
       },
-
       candidate: {
         select: {
           id: true,
           name: true,
           email: true,
           profilePhoto: true,
-
           candidateProfile: {
             select: {
               bio: true,
@@ -566,7 +882,6 @@ const getAttemptDetailsForCompany = async (
           },
         },
       },
-
       answers: {
         include: {
           question: {
@@ -583,36 +898,29 @@ const getAttemptDetailsForCompany = async (
   if (!attempt) {
     throw new Error("Assessment attempt not found");
   }
+  console.log("Logged in Company ID:", companyId);
+  console.log("Attempt Company ID:", attempt.companyId);
 
-  // Company ownership check
-  if (attempt.companyId !== companyId) {
+  if (
+    attempt.companyId !== companyId &&
+    attempt.assessment.companyId !== companyId
+  ) {
     throw new Error("You are not allowed to access this attempt");
   }
 
   return {
     id: attempt.id,
-
     assessment: attempt.assessment,
-
     candidate: attempt.candidate,
-
     attemptNumber: attempt.attemptNumber,
-
     status: attempt.status,
-
     startedAt: attempt.startedAt,
-
     submittedAt: attempt.submittedAt,
-
     expiresAt: attempt.expiresAt,
-
     score: attempt.score,
-
     answers: attempt.answers.map((answer) => ({
       id: answer.id,
-
       questionId: answer.questionId,
-
       question: {
         id: answer.question.id,
         title: answer.question.title,
@@ -621,83 +929,63 @@ const getAttemptDetailsForCompany = async (
         category: answer.question.category,
         difficulty: answer.question.difficulty,
         marks: answer.question.marks,
-
         options: answer.question.options.map((option) => ({
           id: option.id,
           text: option.text,
-
-          // MCQ হলে correct answer company দেখতে পারবে
           ...(answer.question.type === "MCQ"
-            ? {
-                isCorrect: option.isCorrect,
-              }
+            ? { isCorrect: option.isCorrect }
             : {}),
         })),
       },
-
       selectedOptionId: answer.selectedOptionId,
-
       selectedOption: answer.selectedOption
         ? {
             id: answer.selectedOption.id,
             text: answer.selectedOption.text,
           }
         : null,
-
       writtenAnswer: answer.writtenAnswer,
-
       codeAnswer: answer.codeAnswer,
     })),
   };
 };
 
-const getCompanyAttempts = async (companyId: string) => {
+export const getCompanyAttempts = async (companyId: string) => {
+  console.log("Service-a Incoming Company ID:", companyId);
+
   const attempts = await prisma.assessmentAttempt.findMany({
     where: {
-      companyId,
-      status: "SUBMITTED",
+      // OR দিয়ে খোঁজা হচ্ছে: যেন companyId সরাসরি মিলুক অথবা Assessment-এর মাধ্যমে মিলুক
+      OR: [{ companyId: companyId }, { assessment: { companyId: companyId } }],
     },
-
     select: {
       id: true,
-      attemptNumber: true,
+      candidateId: true,
+      assessmentId: true,
       status: true,
-      startedAt: true,
       submittedAt: true,
-      expiresAt: true,
+      startedAt: true,
       score: true,
-
+      attemptNumber: true,
       assessment: {
         select: {
-          id: true,
           title: true,
-          passingScore: true,
+          companyId: true,
         },
       },
-
       candidate: {
         select: {
-          id: true,
           name: true,
           email: true,
-          profilePhoto: true,
-
-          candidateProfile: {
-            select: {
-              phone: true,
-              location: true,
-              skills: true,
-            },
-          },
         },
       },
     },
-
     orderBy: {
-      submittedAt: "desc",
+      startedAt: "desc",
     },
   });
 
+  console.log("DB Result:", attempts);
   return attempts;
 };
 

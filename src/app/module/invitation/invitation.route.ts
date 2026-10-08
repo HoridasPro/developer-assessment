@@ -27,7 +27,7 @@ router.patch(
 );
 
 router.post(
-  "/start/:assessmentId",
+  "/start/:invitationId",
   auth(Role.CANDIDATE),
   InvitationController.startAssessment,
 );

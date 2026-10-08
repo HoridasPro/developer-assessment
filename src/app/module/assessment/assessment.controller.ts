@@ -194,6 +194,23 @@ const getAssessmentById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+export const getArchivedAssessments = async (req: Request, res: Response) => {
+  try {
+    const assessments = await AssessmentService.getArchivedAssessments();
+
+    res.status(200).json({
+      success: true,
+      message: "Archived assessments fetched successfully",
+      data: assessments,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error?.message || "Failed to fetch archived assessments",
+      errors: [],
+    });
+  }
+};
 export const AssessmentController = {
   createAssessmentDB,
   deleteAssessment,
@@ -204,4 +221,5 @@ export const AssessmentController = {
   searchAssessments,
   getAllAssessments,
   getAssessmentById,
+  getArchivedAssessments,
 };
