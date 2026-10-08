@@ -155,7 +155,7 @@ const getAllAssessments = catchAsync(async (req: Request, res: Response) => {
   }
 
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+  const limit = Number(req.query.limit) || 5;
 
   const status =
     typeof req.query.status === "string" ? req.query.status : undefined;
@@ -211,6 +211,36 @@ export const getArchivedAssessments = async (req: Request, res: Response) => {
     });
   }
 };
+
+const getAssessmentReport = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const { assessmentId } = req.params;
+
+    const companyId = req.data?.id;
+
+    const result = await AssessmentService.getAssessmentReport(
+      assessmentId as string,
+      companyId as string,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Assessment report fetched successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message || "Failed to fetch assessment report",
+      data: null,
+    });
+  }
+};
+
+ 
 export const AssessmentController = {
   createAssessmentDB,
   deleteAssessment,
@@ -222,4 +252,5 @@ export const AssessmentController = {
   getAllAssessments,
   getAssessmentById,
   getArchivedAssessments,
+  getAssessmentReport
 };

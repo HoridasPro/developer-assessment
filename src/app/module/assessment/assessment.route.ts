@@ -71,4 +71,10 @@ router.get(
   AssessmentController.getAssessmentById,
 );
 
+router.get(
+  "/assessment/:assessmentId",
+  auth(Role.COMPANY),
+  AssessmentController.getAssessmentReport,
+);
+
 export const AssessmentRoutes = router;

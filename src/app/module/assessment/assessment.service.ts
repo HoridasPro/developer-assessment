@@ -471,7 +471,7 @@ const searchAssessments = async (companyUserId: string, keyword: string) => {
 const getAllAssessments = async (
   companyUserId: string,
   page: number = 1,
-  limit: number = 10,
+  limit: number = 5,
   status?: string,
 ) => {
   const company = await prisma.companyProfile.findUnique({
@@ -569,7 +569,215 @@ export const getArchivedAssessments = async () => {
       createdAt: "desc",
     },
   });
-};;
+};
+
+const getAssessmentReport = async (assessmentId: string, userId: string) => {
+  // ==========================================
+  // Find company
+  // ==========================================
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
+
+  if (!company) {
+    throw new Error("Company profile not found");
+  }
+
+  // ==========================================
+  // Find assessment
+  // ==========================================
+  const assessment = await prisma.assessment.findFirst({
+    where: {
+      id: assessmentId,
+      companyId: company.id,
+      isDeleted: false,
+    },
+  });
+
+  if (!assessment) {
+    throw new Error("Assessment not found");
+  }
+
+  // ==========================================
+  // Get attempts
+  // ==========================================
+  const attempts = await prisma.assessmentAttempt.findMany({
+    where: {
+      assessmentId,
+    },
+  });
+
+  // ==========================================
+  // Get candidate IDs
+  // ==========================================
+  const candidateIds = [
+    ...new Set(
+      attempts
+        .map((attempt) => attempt.candidateId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  // ==========================================
+  // Get candidates
+  // ==========================================
+  const candidatesData = await prisma.candidateProfile.findMany({
+    where: {
+      id: {
+        in: candidateIds,
+      },
+    },
+    include: {
+      user: true,
+    },
+  });
+
+  // ==========================================
+  // Create candidate map
+  // ==========================================
+  const candidateMap = new Map(
+    candidatesData.map((candidate) => [candidate.id, candidate]),
+  );
+
+  // ==========================================
+  // Statistics
+  // ==========================================
+
+  const totalCandidates = candidateIds.length;
+
+  const totalAttempts = attempts.length;
+
+  const completedAttempts = attempts.filter(
+    (attempt) => attempt.status === "COMPLETED",
+  );
+
+  const submittedAttempts = attempts.filter(
+    (attempt) => attempt.status === "SUBMITTED",
+  );
+
+  const passedAttempts = completedAttempts.filter(
+    (attempt) => attempt.passed === true,
+  );
+
+  const failedAttempts = completedAttempts.filter(
+    (attempt) => attempt.passed === false,
+  );
+
+  const inProgressAttempts = attempts.filter(
+    (attempt) => attempt.status === "IN_PROGRESS",
+  );
+
+  // ==========================================
+  // Scores
+  // ==========================================
+
+  const scores = completedAttempts
+    .map((attempt) => Number(attempt.score ?? 0))
+    .filter((score) => !Number.isNaN(score));
+
+  const totalScore = scores.reduce((sum, score) => sum + score, 0);
+
+  const averageScore =
+    scores.length > 0 ? Number((totalScore / scores.length).toFixed(2)) : 0;
+
+  const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
+
+  const lowestScore = scores.length > 0 ? Math.min(...scores) : 0;
+
+  const passRate =
+    completedAttempts.length > 0
+      ? Number(
+          ((passedAttempts.length / completedAttempts.length) * 100).toFixed(2),
+        )
+      : 0;
+
+  // ==========================================
+  // Candidate Reports
+  // ==========================================
+
+  const candidateReports = attempts.map((attempt) => {
+    const candidate = candidateMap.get(attempt.candidateId);
+
+    // score = obtained marks
+    const score = Number(attempt.score ?? 0);
+
+    return {
+      attemptId: attempt.id,
+
+      candidateId: attempt.candidateId,
+
+      candidateName: candidate?.user?.name || "Unknown Candidate",
+
+      email: candidate?.user?.email || "",
+
+      profilePhoto: candidate?.user?.profilePhoto || null,
+
+      attemptNumber: attempt.attemptNumber,
+
+      status: attempt.status,
+
+      score,
+
+      passed: attempt.passed ?? null,
+
+      startedAt: attempt.startedAt,
+
+      submittedAt: attempt.submittedAt,
+
+      expiresAt: attempt.expiresAt,
+    };
+  });
+
+  // ==========================================
+  // Final Report
+  // ==========================================
+
+  return {
+    assessment: {
+      id: assessment.id,
+
+      title: assessment.title,
+
+      description: assessment.description,
+
+      duration: assessment.duration,
+
+      passingScore: assessment.passingScore,
+
+      price: assessment.price,
+
+      status: assessment.status,
+    },
+
+    summary: {
+      totalCandidates,
+
+      totalAttempts,
+
+      completed: completedAttempts.length,
+
+      submitted: submittedAttempts.length,
+
+      passed: passedAttempts.length,
+
+      failed: failedAttempts.length,
+
+      inProgress: inProgressAttempts.length,
+
+      averageScore,
+
+      highestScore,
+
+      lowestScore,
+
+      passRate,
+    },
+
+    candidates: candidateReports,
+  };
+};
 
 export const AssessmentService = {
   createAssessment,
@@ -582,4 +790,5 @@ export const AssessmentService = {
   getAllAssessments,
   getAssessmentById,
   getArchivedAssessments,
+  getAssessmentReport,
 };

@@ -950,14 +950,62 @@ export const getAttemptDetailsForCompany = async (
   };
 };
 
+// export const getCompanyAttempts = async (companyId: string) => {
+//   console.log("Service-a Incoming Company ID:", companyId);
+
+//   const attempts = await prisma.assessmentAttempt.findMany({
+//     where: {
+//       // OR দিয়ে খোঁজা হচ্ছে: যেন companyId সরাসরি মিলুক অথবা Assessment-এর মাধ্যমে মিলুক
+//       OR: [{ companyId: companyId }, { assessment: { companyId: companyId } }],
+//     },
+//     select: {
+//       id: true,
+//       candidateId: true,
+//       assessmentId: true,
+//       status: true,
+//       submittedAt: true,
+//       startedAt: true,
+//       score: true,
+//       attemptNumber: true,
+//       assessment: {
+//         select: {
+//           title: true,
+//           companyId: true,
+//         },
+//       },
+//       candidate: {
+//         select: {
+//           name: true,
+//           email: true,
+//         },
+//       },
+//     },
+//     orderBy: {
+//       startedAt: "desc",
+//     },
+//   });
+
+//   console.log("DB Result:", attempts);
+//   return attempts;
+// };
+
 export const getCompanyAttempts = async (companyId: string) => {
   console.log("Service-a Incoming Company ID:", companyId);
 
   const attempts = await prisma.assessmentAttempt.findMany({
     where: {
-      // OR দিয়ে খোঁজা হচ্ছে: যেন companyId সরাসরি মিলুক অথবা Assessment-এর মাধ্যমে মিলুক
-      OR: [{ companyId: companyId }, { assessment: { companyId: companyId } }],
+      OR: [
+        {
+          companyId: companyId,
+        },
+        {
+          assessment: {
+            companyId: companyId,
+          },
+        },
+      ],
     },
+
     select: {
       id: true,
       candidateId: true,
@@ -966,13 +1014,16 @@ export const getCompanyAttempts = async (companyId: string) => {
       submittedAt: true,
       startedAt: true,
       score: true,
+      passed: true, // ✅ এই লাইনটি যোগ করা হয়েছে
       attemptNumber: true,
+
       assessment: {
         select: {
           title: true,
           companyId: true,
         },
       },
+
       candidate: {
         select: {
           name: true,
@@ -980,12 +1031,14 @@ export const getCompanyAttempts = async (companyId: string) => {
         },
       },
     },
+
     orderBy: {
       startedAt: "desc",
     },
   });
 
   console.log("DB Result:", attempts);
+
   return attempts;
 };
 

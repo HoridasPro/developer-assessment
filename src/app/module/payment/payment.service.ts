@@ -336,7 +336,11 @@ const getAllPayments = async (userId: string) => {
     },
     include: {
       assessment: true,
-      company: true,
+      company: {
+        include: {
+          user: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
