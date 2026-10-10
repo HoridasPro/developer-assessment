@@ -27,4 +27,10 @@ router.patch(
   AdminController.suspendUser,
 );
 
+router.patch(
+  "/users/activate/:userId",
+  auth(Role.ADMIN),
+
+  AdminController.activateAdminUserController,
+);
 export const AdminRoutes = router;

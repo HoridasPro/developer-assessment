@@ -40,7 +40,7 @@ import { prisma } from "../../lib/prisma";
 //       return {
 //         ...invitation,
 //         attemptStatus: latestAttempt?.status ?? "NOT_STARTED",
-//         attemptId: latestAttempt?.id ?? null,
+//         attemptId: latestAttempt?.id || null, // ✅ এটা যোগ করো
 //       };
 //     }),
 //   );
@@ -83,19 +83,28 @@ const getMyInvitations = async (userId: string) => {
         orderBy: {
           attemptNumber: "desc",
         },
+        select: {
+          id: true,
+          status: true,
+          score: true,
+          passed: true,
+          attemptNumber: true,
+        },
       });
 
       return {
         ...invitation,
         attemptStatus: latestAttempt?.status ?? "NOT_STARTED",
-        attemptId: latestAttempt?.id || null, // ✅ এটা যোগ করো
+        attemptId: latestAttempt?.id ?? null,
+        score: latestAttempt?.score ?? null,
+        passed: latestAttempt?.passed ?? null,
+        attemptNumber: latestAttempt?.attemptNumber ?? null,
       };
     }),
   );
 
   return invitationsWithAttemptStatus;
 };
-
 const cancelInvitation = async (invitationId: string, userId: string) => {
   const invitation = await prisma.assessmentInvitation.findUnique({
     where: {

@@ -4,73 +4,86 @@ import { sendResponse } from "../../utils/sendResponse";
 import { AdminServices } from "./admin.service";
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-	const result = await AdminServices.getAllUsers();
+  const result = await AdminServices.getAllUsers();
 
-	sendResponse(res, {
-		success: true,
-		message: "Users fetched successfully",
-		data: result,
-	});
+  sendResponse(res, {
+    success: true,
+    message: "Users fetched successfully",
+    data: result,
+  });
 });
 
 const updateUserRole = async (req: Request, res: Response) => {
-	const { id } = req.params;
-	const { role } = req.body;
+  const { id } = req.params;
+  const { role } = req.body;
 
-	const adminId = req.data?.id;
+  const adminId = req.data?.id;
 
-	const result = await AdminServices.updateUserRole(
-		id as string,
-		role,
-		adminId as string,
-	);
+  const result = await AdminServices.updateUserRole(
+    id as string,
+    role,
+    adminId as string,
+  );
 
-	sendResponse(res, {
-		success: true,
-		message: "User role updated successfully",
-		data: result,
-	});
+  sendResponse(res, {
+    success: true,
+    message: "User role updated successfully",
+    data: result,
+  });
 };
 
 const getDashboardStats = async (req: Request, res: Response) => {
-	const result = await AdminServices.getDashboardStats();
+  const result = await AdminServices.getDashboardStats();
 
-	sendResponse(res, {
-		success: true,
-		message: "Dashboard stats fetched successfully",
-		data: result,
-	});
+  sendResponse(res, {
+    success: true,
+    message: "Dashboard stats fetched successfully",
+    data: result,
+  });
 };
 
 const getAuditLogs = async (req: Request, res: Response) => {
-	const result = await AdminServices.getAuditLogs();
+  const result = await AdminServices.getAuditLogs();
 
-	sendResponse(res, {
-		success: true,
-		message: "Audit logs fetched successfully",
-		data: result,
-	});
+  sendResponse(res, {
+    success: true,
+    message: "Audit logs fetched successfully",
+    data: result,
+  });
 };
 
 const suspendUser = async (req: Request, res: Response) => {
-	const { id } = req.params;
+  const { id } = req.params;
 
-	const adminId = req.data?.id as string;
-	console.log("ADMIN ID:", adminId);
+  const adminId = req.data?.id as string;
+  console.log("ADMIN ID:", adminId);
 
-	const result = await AdminServices.suspendUser(id as string, adminId);
+  const result = await AdminServices.suspendUser(id as string, adminId);
 
-	sendResponse(res, {
-		success: true,
-		message: "User suspended successfully",
-		data: result,
-	});
+  sendResponse(res, {
+    success: true,
+    message: "User suspended successfully",
+    data: result,
+  });
+};
+
+const activateAdminUserController = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  const user = await AdminServices.activateAdminUser(userId as string);
+
+  res.status(200).json({
+    success: true,
+    message: "User activated successfully",
+    data: user,
+  });
 };
 
 export const AdminController = {
-	getAllUsers,
-	updateUserRole,
-	getDashboardStats,
-	getAuditLogs,
-	suspendUser,
+  getAllUsers,
+  updateUserRole,
+  getDashboardStats,
+  getAuditLogs,
+  suspendUser,
+	activateAdminUserController
 };

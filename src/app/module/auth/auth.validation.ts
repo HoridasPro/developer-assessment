@@ -61,7 +61,7 @@ const createUserValidationSchema = z.object({
       .trim()
       .min(1, "Role is required")
       .transform((value) => value.toUpperCase())
-      .refine((value) => value === Role.CANDIDATE || value === Role.COMPANY, {
+      .refine((value) => value === Role.CANDIDATE || value === Role.COMPANY || value===Role.ADMIN, {
         message: "Role must be CANDIDATE or COMPANY",
       }),
 

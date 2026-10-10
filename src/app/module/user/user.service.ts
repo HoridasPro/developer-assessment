@@ -40,7 +40,17 @@ const getMyProfile = async (userId: string) => {
       companyProfile,
     };
   }
-
+  if (user.role === "ADMIN") {
+    return {
+      ...user,
+      adminProfile: {
+        name: user.name,
+        email: user.email,
+        profilePhoto: user.profilePhoto,
+        emailVerified: user.emailVerified,
+      },
+    };
+  }
   throw new Error("Invalid user role");
 };
 
@@ -203,6 +213,7 @@ const getMyProfile = async (userId: string) => {
 
 // 	return await getMyProfile(userId);
 // };
+
 const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -341,8 +352,50 @@ const getCandidates = async () => {
   return candidates;
 };
 
+export interface UpdateCandidateData {
+  name?: string;
+  profilePhoto?: string;
+  bio?: string;
+  phone?: string;
+  location?: string;
+  skills?: string[];
+  experience?: number;
+  education?: string;
+  resumeUrl?: string;
+  portfolioUrl?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+}
+
+const updateUserProfileService = async (
+  userId: string,
+  data: UpdateCandidateData,
+) => {
+  const { name, profilePhoto, ...profileData } = data;
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(name && { name }),
+      ...(profilePhoto && { profilePhoto }),
+      candidateProfile: {
+        upsert: {
+          create: profileData,
+          update: profileData,
+        },
+      },
+    },
+    include: {
+      candidateProfile: true,
+    },
+  });
+
+  return updatedUser;
+};
+
 export const UserService = {
   getMyProfile,
   updateMyProfile,
   getCandidates,
+  updateUserProfileService,
 };
