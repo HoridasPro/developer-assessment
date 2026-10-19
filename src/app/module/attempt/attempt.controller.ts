@@ -63,39 +63,19 @@ const submitAttempt = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const evaluateAttempt = catchAsync(async (req: Request, res: Response) => {
-//   const { attemptId } = req.params;
-
-//   const companyId = req.data?.id;
-
-//   if (!companyId) {
-//     throw new Error("User not logged in");
-//   }
-
-//   const result = await AttemptServices.evaluateAttempt(
-//     attemptId as string,
-//     companyId,
-//   );
-
-//   sendResponse(res, {
-//     success: true,
-//     message: "Assessment evaluated successfully",
-//     data: result,
-//   });
-// });
-
+ 
 const evaluateAttempt = catchAsync(async (req: Request, res: Response) => {
   const { attemptId } = req.params;
   const companyId = (req as any).data?.id;
 
-  // 1. req.body.answers অথবা req.body.payload.answers দুটোই নিরাপদে চেক করুন
+   
   const answers = req.body?.answers || req.body?.payload?.answers;
 
   if (!answers || !Array.isArray(answers) || answers.length === 0) {
     throw new Error("Answers array is required in request body");
   }
 
-  // 2. সার্ভিস ফাংশনে ৩টি Argument পাস করুন
+ 
   const result = await AttemptServices.evaluateAttempt(
     attemptId as string,
     companyId,
@@ -108,27 +88,7 @@ const evaluateAttempt = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-// const getAttemptResult = catchAsync(async (req: Request, res: Response) => {
-//   const { attemptId } = req.params;
-
-//   const candidateId = req.data?.id;
-
-//   if (!candidateId) {
-//     throw new Error("User not logged in");
-//   }
-
-//   const result = await AttemptServices.getAttemptResult(
-//     attemptId as string,
-//     candidateId,
-//   );
-
-//   sendResponse(res, {
-//     success: true,
-//     message: "Assessment result fetched successfully",
-//     data: result,
-//   });
-// });
-
+ 
 const getAttemptResult = catchAsync(async (req: Request, res: Response) => {
   const candidateUserId = req.data?.id as string;
 

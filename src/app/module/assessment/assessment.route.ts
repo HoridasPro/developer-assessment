@@ -65,6 +65,15 @@ router.get(
   AssessmentController.getArchivedAssessments,
 );
 
+// Public: সব published assessments
+router.get("/public/assessments", AssessmentController.getPublicAssessments);
+
+// Public: একটি published assessment-এর details
+router.get(
+  "/public/assessments/:assessmentId",
+  AssessmentController.getPublicAssessmentById,
+);
+
 router.get(
   "/assessments/:assessmentId",
   auth(Role.COMPANY),

@@ -136,64 +136,6 @@ const addQuestionsToAssessment = async (
   return createdQuestions;
 };
 
-// const getAssessmentQuestions = async (assessmentId: string) => {
-//   const questions = await prisma.assessmentQuestion.findMany({
-//     where: {
-//       assessmentId,
-//     },
-//     orderBy: {
-//       order: "asc",
-//     },
-//     include: {
-//       questions: {
-//         // 👈 ১. 'questions' এর বদলে 'question' (একবচন)
-//         include: {
-//           options: true, // 👈 ২. MCQ অপশনগুলো লোড করার জন্য include করা হলো
-//         },
-//       },
-//     },
-//   });
-
-//   return questions.map((item) => ({
-//     id: item.questions.id,
-//     title: item.questions.title,
-//     description: item.questions.description,
-//     type: item.questions.type,
-//     category: item.questions.category,
-//     difficulty: item.questions.difficulty,
-//     marks: item.marks ?? item.questions.marks, // 👈 ৩. অ্যাসেসমেন্ট পিভট টেবিলের মার্কস
-//     order: item.order,
-//     questionOptions: item.questions.options || [], // 👈 ৪. অপশনগুলো ফ্রন্টএন্ডে পাঠানো হলো
-//   }));
-// };
-
-// const getAssessmentQuestions = async (assessmentId: string) => {
-//   const questions = await prisma.assessmentQuestion.findMany({
-//     where: {
-//       assessmentId,
-//     },
-//     orderBy: {
-//       order: "asc",
-//     },
-//     include: {
-//       questions: true, // Question info (title, description, type, etc.)
-//       options: true, // 👈 আসল সমাধান: AssessmentQuestion মডেলে থাকা options include করা হলো
-//     },
-//   });
-
-//   return questions.map((item) => ({
-//     id: item.questions.id,
-//     title: item.questions.title,
-//     description: item.questions.description,
-//     type: item.questions.type,
-//     category: item.questions.category,
-//     difficulty: item.questions.difficulty,
-//     marks: item.marks ?? item.questions.marks, // Pivot table-এর মার্কস, না থাকলে Question-এর মার্কস
-//     order: item.order,
-//     questionOptions: item.options || [], // 👈 ফ্রন্টএন্ডে অপশনগুলো পেয়ে যাবে
-//   }));
-// };
-
 const getAssessmentQuestions = async (assessmentId: string) => {
   const questions = await prisma.assessmentQuestion.findMany({
     where: {
@@ -560,6 +502,66 @@ const getAssessmentById = async (
   return assessment;
 };
 
+const getPublicAssessmentById = async (assessmentId: string) => {
+  const assessment = await prisma.assessment.findFirst({
+    where: {
+      id: assessmentId,
+      status: "PUBLISHED",
+      isDeleted: false,
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      duration: true,
+      passingScore: true,
+      maxAttempts: true,
+      price: true,
+      startAt: true,
+      endAt: true,
+      status: true,
+      createdAt: true,
+      company: {
+        select: {
+          user: {
+            select: {
+              name: true,
+              profilePhoto: true,
+            },
+          },
+        },
+      },
+      questions: {
+        orderBy: {
+          order: "asc",
+        },
+        select: {
+          id: true,
+          order: true,
+          marks: true,
+          questions: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              type: true,
+              category: true,
+              difficulty: true,
+              marks: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!assessment) {
+    throw new Error("Published assessment not found");
+  }
+
+  return assessment;
+};
+
 export const getArchivedAssessments = async () => {
   return prisma.assessment.findMany({
     where: {
@@ -779,6 +781,64 @@ const getAssessmentReport = async (assessmentId: string, userId: string) => {
   };
 };
 
+const getPublicAssessments = async (page = 1, limit = 8, search = "") => {
+  const skip = (page - 1) * limit;
+
+  const where = {
+    status: "PUBLISHED" as const,
+    ...(search
+      ? {
+          OR: [
+            {
+              title: {
+                contains: search,
+                mode: "insensitive" as const,
+              },
+            },
+            {
+              description: {
+                contains: search,
+                mode: "insensitive" as const,
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [assessments, total] = await Promise.all([
+    prisma.assessment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        duration: true,
+        passingScore: true,
+        maxAttempts: true,
+        price: true,
+        status: true,
+        startAt: true,
+        endAt: true,
+      },
+    }),
+    prisma.assessment.count({ where }),
+  ]);
+
+  return {
+    assessments,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
 export const AssessmentService = {
   createAssessment,
   deleteAssessment,
@@ -789,6 +849,8 @@ export const AssessmentService = {
   searchAssessments,
   getAllAssessments,
   getAssessmentById,
+  getPublicAssessmentById,
   getArchivedAssessments,
   getAssessmentReport,
+  getPublicAssessments,
 };

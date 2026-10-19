@@ -194,6 +194,22 @@ const getAssessmentById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPublicAssessmentById = catchAsync(
+  async (req: Request, res: Response) => {
+    const { assessmentId } = req.params;
+
+    const result = await AssessmentService.getPublicAssessmentById(
+      assessmentId as string,
+    );
+
+    sendResponse(res, {
+      success: true,
+      message: "Public assessment fetched successfully",
+      data: result,
+    });
+  },
+);
+
 export const getArchivedAssessments = async (req: Request, res: Response) => {
   try {
     const assessments = await AssessmentService.getArchivedAssessments();
@@ -212,10 +228,7 @@ export const getArchivedAssessments = async (req: Request, res: Response) => {
   }
 };
 
-const getAssessmentReport = async (
-  req: Request,
-  res: Response,
-) => {
+const getAssessmentReport = async (req: Request, res: Response) => {
   try {
     const { assessmentId } = req.params;
 
@@ -240,7 +253,26 @@ const getAssessmentReport = async (
   }
 };
 
- 
+const getPublicAssessments = async (req: Request, res: Response) => {
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 50);
+
+  const search =
+    typeof req.query.search === "string" ? req.query.search.trim() : "";
+
+  const result = await AssessmentService.getPublicAssessments(
+    page,
+    limit,
+    search,
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Public assessments retrieved successfully",
+    data: result,
+  });
+};
+
 export const AssessmentController = {
   createAssessmentDB,
   deleteAssessment,
@@ -251,6 +283,8 @@ export const AssessmentController = {
   searchAssessments,
   getAllAssessments,
   getAssessmentById,
+  getPublicAssessmentById,
   getArchivedAssessments,
-  getAssessmentReport
+  getAssessmentReport,
+  getPublicAssessments,
 };
