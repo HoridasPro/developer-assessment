@@ -816,6 +816,7 @@ const getPublicAssessments = async (page = 1, limit = 8, search = "") => {
         id: true,
         title: true,
         description: true,
+        imageUrl: true,
         duration: true,
         passingScore: true,
         maxAttempts: true,

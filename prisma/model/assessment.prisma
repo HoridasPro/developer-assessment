@@ -2,6 +2,7 @@ model Assessment {
   id           String  @id @default(uuid())
   title        String
   description  String?
+  imageUrl     String?
   duration     Int
   passingScore Float
   maxAttempts  Int     @default(1)
