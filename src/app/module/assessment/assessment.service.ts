@@ -20,6 +20,7 @@ const createAssessment = async (
     data: {
       title: payload.title,
       description: payload.description,
+      imageUrl: payload.imageUrl,
       duration: payload.duration,
       passingScore: payload.passingScore,
       maxAttempts: payload.maxAttempts ?? 1,
