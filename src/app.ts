@@ -6,7 +6,7 @@ import express, {
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import { AuhtRoutes } from "./app/module/auth/auth.route.ts";
+import { AuthRoutes } from "./app/module/auth/auth.route.ts";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandle.ts";
 import { UserRoutes } from "./app/module/user/user.route";
 import { AssessmentRoutes } from "./app/module/assessment/assessment.route.ts";
@@ -30,7 +30,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use("/api/v1/auth", AuhtRoutes);
+app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/users", UserRoutes);
 app.use("/api/v1", AssessmentRoutes);
 app.use("/api/v1/questions", QuestionRoutes);

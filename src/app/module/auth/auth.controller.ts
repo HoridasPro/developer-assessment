@@ -312,6 +312,24 @@ const logout = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const demoLogin = catchAsync(async (req: Request, res: Response) => {
+  const role = String(req.params.role).toUpperCase();
+
+  if (!["CANDIDATE", "COMPANY", "ADMIN"].includes(role)) {
+    throw new Error("Invalid demo role");
+  }
+
+  const result = await AuthService.demoLogin(
+    role as "CANDIDATE" | "COMPANY" | "ADMIN",
+  );
+
+  sendResponse(res, {
+    success: true,
+    message: "Demo account verified",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerUserControllerDB,
   verifyEmailOtp,
@@ -320,4 +338,5 @@ export const AuthController = {
   googleLogin,
   refreshTokenDB,
   logout,
+  demoLogin,
 };

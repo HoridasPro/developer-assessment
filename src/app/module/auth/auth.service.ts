@@ -381,6 +381,78 @@ const refreshToken = async (token: string) => {
     accessToken,
   };
 };
+
+type DemoRole = "CANDIDATE" | "COMPANY" | "ADMIN";
+
+const demoLogin = async (role: DemoRole) => {
+  const demoEmails: Record<DemoRole, string | undefined> = {
+    CANDIDATE: config.demo_candidate_email,
+    COMPANY: config.demo_company_email,
+    ADMIN: config.demo_admin_email,
+  };
+
+  const email = demoEmails[role];
+
+  if (!email) {
+    throw new Error("Demo account is not configured");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email.trim().toLowerCase(),
+    },
+  });
+
+  if (!user) {
+    throw new Error("Demo account not found");
+  }
+
+  if (user.status === "SUSPENDED") {
+    throw new Error("Demo account is suspended");
+  }
+
+  if (!user.emailVerified) {
+    throw new Error("Demo account email is not verified");
+  }
+
+  if (user.role !== role) {
+    throw new Error("Invalid demo account role");
+  }
+
+  if (!user.password) {
+    throw new Error("Demo account password is not configured");
+  }
+
+  // jwtUtils ব্যবহার করে টোকেন তৈরি করা
+  // ✅ সঠিক পদ্ধতি:
+  const jwtPayload = {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    { expiresIn: config.jwt_access_expires_in } as SignOptions,
+  );
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    { expiresIn: config.jwt_refresh_expires_in } as SignOptions,
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  };
+};
 export const AuthService = {
   registerUser,
   verifyEmailOtp,
@@ -388,4 +460,5 @@ export const AuthService = {
   verifyLoginOtp,
   refreshToken,
   googleLogin,
+  demoLogin,
 };
